@@ -1,0 +1,152 @@
+{
+  "firms": {
+    "apex_trader_funding_50k": {
+      "display_name": "Apex Trader Funding - $50K Eval",
+      "account_size": 50000,
+      "profit_target": 3000,
+      "max_trailing_drawdown": 2500,
+      "trailing_drawdown_type": "end_of_day",
+      "daily_loss_limit": null,
+      "min_trading_days": 7,
+      "max_trading_days": null,
+      "consistency_rule": false,
+      "notes": "Trailing drawdown trails from peak equity at end of day"
+    },
+    "apex_trader_funding_100k": {
+      "display_name": "Apex Trader Funding - $100K Eval",
+      "account_size": 100000,
+      "profit_target": 6000,
+      "max_trailing_drawdown": 3000,
+      "trailing_drawdown_type": "end_of_day",
+      "daily_loss_limit": null,
+      "min_trading_days": 7,
+      "max_trading_days": null,
+      "consistency_rule": false,
+      "notes": "Trailing drawdown trails from peak equity at end of day"
+    },
+    "apex_trader_funding_150k": {
+      "display_name": "Apex Trader Funding - $150K Eval",
+      "account_size": 150000,
+      "profit_target": 9000,
+      "max_trailing_drawdown": 5000,
+      "trailing_drawdown_type": "end_of_day",
+      "trailing_stops_at": 100000,
+      "daily_loss_limit": null,
+      "min_trading_days": 7,
+      "max_trading_days": null,
+      "consistency_rule": false,
+      "notes": "Trailing drawdown stops trailing once account reaches starting balance"
+    },
+    "topstep_50k": {
+      "display_name": "Topstep - $50K",
+      "account_size": 50000,
+      "profit_target": 3000,
+      "max_trailing_drawdown": 2000,
+      "trailing_drawdown_type": "real_time",
+      "daily_loss_limit": 1000,
+      "min_trading_days": 5,
+      "max_trading_days": null,
+      "consistency_rule": true,
+      "consistency_max_day_percent": 50,
+      "notes": "No single day can exceed 50% of total profits. Real-time trailing drawdown."
+    },
+    "topstep_100k": {
+      "display_name": "Topstep - $100K",
+      "account_size": 100000,
+      "profit_target": 6000,
+      "max_trailing_drawdown": 3000,
+      "trailing_drawdown_type": "real_time",
+      "daily_loss_limit": 2000,
+      "min_trading_days": 5,
+      "max_trading_days": null,
+      "consistency_rule": true,
+      "consistency_max_day_percent": 50,
+      "notes": "No single day can exceed 50% of total profits. Real-time trailing drawdown."
+    },
+    "topstep_150k": {
+      "display_name": "Topstep - $150K",
+      "account_size": 150000,
+      "profit_target": 9000,
+      "max_trailing_drawdown": 4500,
+      "trailing_drawdown_type": "real_time",
+      "daily_loss_limit": 3000,
+      "min_trading_days": 5,
+      "max_trading_days": null,
+      "consistency_rule": true,
+      "consistency_max_day_percent": 50,
+      "notes": "No single day can exceed 50% of total profits. Real-time trailing drawdown."
+    },
+    "tradeday_50k": {
+      "display_name": "TradeDay - $50K",
+      "account_size": 50000,
+      "profit_target": 2500,
+      "max_trailing_drawdown": 2000,
+      "trailing_drawdown_type": "end_of_day",
+      "daily_loss_limit": null,
+      "min_trading_days": 5,
+      "max_trading_days": null,
+      "consistency_rule": false,
+      "notes": "EOD trailing drawdown"
+    },
+    "tradeday_100k": {
+      "display_name": "TradeDay - $100K",
+      "account_size": 100000,
+      "profit_target": 5000,
+      "max_trailing_drawdown": 3500,
+      "trailing_drawdown_type": "end_of_day",
+      "daily_loss_limit": null,
+      "min_trading_days": 5,
+      "max_trading_days": null,
+      "consistency_rule": false,
+      "notes": "EOD trailing drawdown"
+    },
+    "mff_50k": {
+      "display_name": "My Funded Futures - $50K",
+      "account_size": 50000,
+      "profit_target": 3000,
+      "max_trailing_drawdown": 2000,
+      "trailing_drawdown_type": "end_of_day",
+      "daily_loss_limit": null,
+      "min_trading_days": 5,
+      "max_trading_days": null,
+      "consistency_rule": false,
+      "notes": "EOD trailing drawdown"
+    },
+    "mff_100k": {
+      "display_name": "My Funded Futures - $100K",
+      "account_size": 100000,
+      "profit_target": 6000,
+      "max_trailing_drawdown": 3000,
+      "trailing_drawdown_type": "end_of_day",
+      "daily_loss_limit": null,
+      "min_trading_days": 5,
+      "max_trading_days": null,
+      "consistency_rule": false,
+      "notes": "EOD trailing drawdown"
+    },
+    "take_profit_trader_50k": {
+      "display_name": "Take Profit Trader - $50K",
+      "account_size": 50000,
+      "profit_target": 3000,
+      "max_trailing_drawdown": 2000,
+      "trailing_drawdown_type": "end_of_day",
+      "daily_loss_limit": 1200,
+      "min_trading_days": 5,
+      "max_trading_days": null,
+      "consistency_rule": false,
+      "notes": "Has both daily loss limit and EOD trailing drawdown"
+    },
+    "bulenox_50k": {
+      "display_name": "Bulenox - $50K",
+      "account_size": 50000,
+      "profit_target": 3000,
+      "max_trailing_drawdown": 2500,
+      "trailing_drawdown_type": "end_of_day",
+      "daily_loss_limit": 1100,
+      "min_trading_days": 5,
+      "max_trading_days": null,
+      "consistency_rule": false,
+      "notes": "EOD trailing drawdown with daily loss limit"
+    }
+  }
+}
