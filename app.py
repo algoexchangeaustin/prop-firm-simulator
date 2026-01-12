@@ -194,9 +194,22 @@ def main():
     # Load prop firms
     prop_firms = load_prop_firms()
 
-    # Header
-    st.title("📊 Prop Firm Rule Comparison Tool")
-    st.markdown("*Upload your backtest results to see how they compare against various prop firm rule sets — for educational purposes only*")
+    # Header with logo (auto-detects light/dark mode)
+    # Detect theme - default to dark if not set
+    try:
+        theme_base = st.get_option("theme.base")
+        is_dark = theme_base == "dark" or theme_base is None  # Default to dark
+    except:
+        is_dark = True  # Default to dark mode
+    
+    logo_file = "logo_dark.png" if is_dark else "logo_light.png"
+    
+    col_logo, col_title = st.columns([1, 4])
+    with col_logo:
+        st.image(logo_file, width=200)
+    with col_title:
+        st.title("Prop Firm Rule Comparison Tool")
+        st.markdown("*Upload your backtest results to see how they compare against various prop firm rule sets — for educational purposes only*")
     
     st.divider()
 
