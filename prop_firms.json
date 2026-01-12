@@ -897,7 +897,6 @@
     },
     "bulenox_150k": {
       "firm": "Bulenox",
-      "name": "Bulenox 150K",
       "account_size": 150000,
       "profit_target": 9000,
       "max_trailing_drawdown": 4500,
@@ -922,11 +921,11 @@
         "profit_split_after": 90,
         "payout_day": "wednesday",
         "notes": "Requires 10 trading days. 40% consistency rule. First 3 payouts capped at $2K, then UNLIMITED. Processed Wednesdays only."
-      }
+      },
+      "display_name": "Bulenox - 150K EOD"
     },
     "mff_150k": {
       "firm": "My Funded Futures",
-      "name": "MFF Core 150K",
       "account_size": 150000,
       "profit_target": 9000,
       "max_trailing_drawdown": 4500,
@@ -949,7 +948,8 @@
         "profit_split_after": 90,
         "max_payouts_before_live": 5,
         "notes": "Core plan: 40% consistency in funded, 5 winning days of $300+. After 5 payouts, moved to Live. No activation fees since July 2025."
-      }
+      },
+      "display_name": "My Funded Futures - 150K"
     }
   }
 }
