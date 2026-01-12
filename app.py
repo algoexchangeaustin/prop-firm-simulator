@@ -72,6 +72,29 @@ st.markdown("""
         font-size: 2rem;
         font-weight: bold;
     }
+    /* Custom button styling - AlgoExchange blue */
+    .stButton > button {
+        background-color: #2EBCF0;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+    }
+    .stButton > button:hover {
+        background-color: #25A8D8;
+        color: white;
+        border: none;
+    }
+    .stButton > button:active {
+        background-color: #1E94C0;
+        color: white;
+    }
+    .stButton > button:focus {
+        background-color: #2EBCF0;
+        color: white;
+        box-shadow: none;
+    }
 </style>
 """, unsafe_allow_html=True)
 
