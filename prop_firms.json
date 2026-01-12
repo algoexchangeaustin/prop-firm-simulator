@@ -11,7 +11,19 @@
       "daily_loss_limit": null,
       "min_trading_days": 7,
       "consistency_rule": false,
-      "notes": "INTRADAY trailing drawdown (trails real-time including unrealized P&L). Stops trailing at profit target. No consistency in eval."
+      "notes": "INTRADAY trailing drawdown (trails real-time including unrealized P&L). Stops trailing at profit target. No consistency in eval.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 50,
+        "days_between_payouts": 8,
+        "consistency_percent": 30,
+        "first_payout_cap": 1000,
+        "subsequent_payout_cap": 2000,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 25000,
+        "profit_split_after": 90
+      }
     },
     "apex_trader_funding_100k": {
       "display_name": "Apex Trader Funding - 100K Eval",
@@ -24,7 +36,19 @@
       "daily_loss_limit": null,
       "min_trading_days": 7,
       "consistency_rule": false,
-      "notes": "INTRADAY trailing drawdown (trails real-time including unrealized P&L). Stops trailing at profit target. No consistency in eval."
+      "notes": "INTRADAY trailing drawdown (trails real-time including unrealized P&L). Stops trailing at profit target. No consistency in eval.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 50,
+        "days_between_payouts": 8,
+        "consistency_percent": 30,
+        "first_payout_cap": 1500,
+        "subsequent_payout_cap": 2500,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 25000,
+        "profit_split_after": 90
+      }
     },
     "apex_trader_funding_150k": {
       "display_name": "Apex Trader Funding - 150K Eval",
@@ -37,9 +61,20 @@
       "daily_loss_limit": null,
       "min_trading_days": 7,
       "consistency_rule": false,
-      "notes": "INTRADAY trailing drawdown (trails real-time including unrealized P&L). Stops trailing at profit target. No consistency in eval."
+      "notes": "INTRADAY trailing drawdown (trails real-time including unrealized P&L). Stops trailing at profit target. No consistency in eval.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 50,
+        "days_between_payouts": 8,
+        "consistency_percent": 30,
+        "first_payout_cap": 2000,
+        "subsequent_payout_cap": 4000,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 25000,
+        "profit_split_after": 90
+      }
     },
-
     "topstep_50k": {
       "display_name": "Topstep - 50K Trading Combine",
       "firm": "Topstep",
@@ -52,7 +87,21 @@
       "min_trading_days": 2,
       "consistency_rule": true,
       "consistency_max_day_percent": 50,
-      "notes": "EOD trailing drawdown. 50% consistency rule - no single day can exceed 50% of total profits."
+      "notes": "EOD trailing drawdown. 50% consistency rule - no single day can exceed 50% of total profits.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 150,
+        "days_between_payouts": 5,
+        "consistency_percent": null,
+        "first_payout_cap": 5000,
+        "subsequent_payout_cap": 5000,
+        "max_payout_percent": 50,
+        "min_balance_buffer": 0,
+        "mll_resets_on_payout": true,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "CRITICAL: MLL resets to $0 after first payout! 50% max withdrawal per payout."
+      }
     },
     "topstep_100k": {
       "display_name": "Topstep - 100K Trading Combine",
@@ -66,7 +115,21 @@
       "min_trading_days": 2,
       "consistency_rule": true,
       "consistency_max_day_percent": 50,
-      "notes": "EOD trailing drawdown. 50% consistency rule - no single day can exceed 50% of total profits."
+      "notes": "EOD trailing drawdown. 50% consistency rule - no single day can exceed 50% of total profits.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 150,
+        "days_between_payouts": 5,
+        "consistency_percent": null,
+        "first_payout_cap": 5000,
+        "subsequent_payout_cap": 5000,
+        "max_payout_percent": 50,
+        "min_balance_buffer": 0,
+        "mll_resets_on_payout": true,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "CRITICAL: MLL resets to $0 after first payout! 50% max withdrawal per payout."
+      }
     },
     "topstep_150k": {
       "display_name": "Topstep - 150K Trading Combine",
@@ -80,9 +143,22 @@
       "min_trading_days": 2,
       "consistency_rule": true,
       "consistency_max_day_percent": 50,
-      "notes": "EOD trailing drawdown. 50% consistency rule - no single day can exceed 50% of total profits."
+      "notes": "EOD trailing drawdown. 50% consistency rule - no single day can exceed 50% of total profits.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 150,
+        "days_between_payouts": 5,
+        "consistency_percent": null,
+        "first_payout_cap": 10000,
+        "subsequent_payout_cap": 10000,
+        "max_payout_percent": 50,
+        "min_balance_buffer": 0,
+        "mll_resets_on_payout": true,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "CRITICAL: MLL resets to $0 after first payout! 50% max withdrawal per payout."
+      }
     },
-
     "tradeify_select_50k": {
       "display_name": "Tradeify - 50K Select Eval",
       "firm": "Tradeify",
@@ -95,7 +171,21 @@
       "min_trading_days": 3,
       "consistency_rule": true,
       "consistency_max_day_percent": 40,
-      "notes": "EOD trailing drawdown. 40% consistency rule. NO daily loss limit during evaluation."
+      "notes": "EOD trailing drawdown. 40% consistency rule. NO daily loss limit during evaluation.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 10,
+        "consistency_percent": 35,
+        "first_payout_cap": 1500,
+        "subsequent_payout_cap": 3000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 15000,
+        "profit_split_after": 90,
+        "notes": "Payout windows: 1st-4th, 11th-14th, 21st-24th monthly. 35% consistency rule."
+      }
     },
     "tradeify_select_100k": {
       "display_name": "Tradeify - 100K Select Eval",
@@ -109,7 +199,21 @@
       "min_trading_days": 3,
       "consistency_rule": true,
       "consistency_max_day_percent": 40,
-      "notes": "EOD trailing drawdown. 40% consistency rule. NO daily loss limit during evaluation."
+      "notes": "EOD trailing drawdown. 40% consistency rule. NO daily loss limit during evaluation.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 10,
+        "consistency_percent": 35,
+        "first_payout_cap": 2250,
+        "subsequent_payout_cap": 4500,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 15000,
+        "profit_split_after": 90,
+        "notes": "Payout windows: 1st-4th, 11th-14th, 21st-24th monthly. 35% consistency rule."
+      }
     },
     "tradeify_select_150k": {
       "display_name": "Tradeify - 150K Select Eval",
@@ -123,9 +227,22 @@
       "min_trading_days": 3,
       "consistency_rule": true,
       "consistency_max_day_percent": 40,
-      "notes": "EOD trailing drawdown. 40% consistency rule. NO daily loss limit during evaluation."
+      "notes": "EOD trailing drawdown. 40% consistency rule. NO daily loss limit during evaluation.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 10,
+        "consistency_percent": 35,
+        "first_payout_cap": 3000,
+        "subsequent_payout_cap": 6000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 15000,
+        "profit_split_after": 90,
+        "notes": "Payout windows: 1st-4th, 11th-14th, 21st-24th monthly. 35% consistency rule."
+      }
     },
-
     "tradeify_growth_50k": {
       "display_name": "Tradeify - 50K Growth Eval",
       "firm": "Tradeify",
@@ -137,7 +254,21 @@
       "daily_loss_limit": 1250,
       "min_trading_days": 1,
       "consistency_rule": false,
-      "notes": "EOD trailing drawdown. Daily loss limit is soft breach (pauses trading). Can pass in 1 day."
+      "notes": "EOD trailing drawdown. Daily loss limit is soft breach (pauses trading). Can pass in 1 day.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 10,
+        "consistency_percent": 35,
+        "first_payout_cap": 1500,
+        "subsequent_payout_cap": 3000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 15000,
+        "profit_split_after": 90,
+        "notes": "Payout windows: 1st-4th, 11th-14th, 21st-24th monthly. 35% consistency rule."
+      }
     },
     "tradeify_growth_100k": {
       "display_name": "Tradeify - 100K Growth Eval",
@@ -150,7 +281,21 @@
       "daily_loss_limit": 2500,
       "min_trading_days": 1,
       "consistency_rule": false,
-      "notes": "EOD trailing drawdown. Daily loss limit is soft breach (pauses trading). Can pass in 1 day."
+      "notes": "EOD trailing drawdown. Daily loss limit is soft breach (pauses trading). Can pass in 1 day.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 10,
+        "consistency_percent": 35,
+        "first_payout_cap": 2250,
+        "subsequent_payout_cap": 4500,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 15000,
+        "profit_split_after": 90,
+        "notes": "Payout windows: 1st-4th, 11th-14th, 21st-24th monthly. 35% consistency rule."
+      }
     },
     "tradeify_growth_150k": {
       "display_name": "Tradeify - 150K Growth Eval",
@@ -163,9 +308,22 @@
       "daily_loss_limit": 3750,
       "min_trading_days": 1,
       "consistency_rule": false,
-      "notes": "EOD trailing drawdown. Daily loss limit is soft breach (pauses trading). Can pass in 1 day."
+      "notes": "EOD trailing drawdown. Daily loss limit is soft breach (pauses trading). Can pass in 1 day.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 10,
+        "consistency_percent": 35,
+        "first_payout_cap": 3000,
+        "subsequent_payout_cap": 6000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 15000,
+        "profit_split_after": 90,
+        "notes": "Payout windows: 1st-4th, 11th-14th, 21st-24th monthly. 35% consistency rule."
+      }
     },
-
     "tradeify_lightning_50k": {
       "display_name": "Tradeify - 50K Lightning (Instant)",
       "firm": "Tradeify",
@@ -178,7 +336,21 @@
       "min_trading_days": 0,
       "consistency_rule": true,
       "consistency_max_day_percent": 20,
-      "notes": "Instant funded - skip evaluation. EOD trailing. 20% consistency for first payout, scales to 30%."
+      "notes": "Instant funded - skip evaluation. EOD trailing. 20% consistency for first payout, scales to 30%.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 10,
+        "consistency_percent": 35,
+        "first_payout_cap": 1500,
+        "subsequent_payout_cap": 3000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 15000,
+        "profit_split_after": 90,
+        "notes": "Payout windows: 1st-4th, 11th-14th, 21st-24th monthly. 35% consistency rule."
+      }
     },
     "tradeify_lightning_100k": {
       "display_name": "Tradeify - 100K Lightning (Instant)",
@@ -192,7 +364,21 @@
       "min_trading_days": 0,
       "consistency_rule": true,
       "consistency_max_day_percent": 20,
-      "notes": "Instant funded - skip evaluation. EOD trailing. 20% consistency for first payout, scales to 30%."
+      "notes": "Instant funded - skip evaluation. EOD trailing. 20% consistency for first payout, scales to 30%.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 10,
+        "consistency_percent": 35,
+        "first_payout_cap": 2250,
+        "subsequent_payout_cap": 4500,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 15000,
+        "profit_split_after": 90,
+        "notes": "Payout windows: 1st-4th, 11th-14th, 21st-24th monthly. 35% consistency rule."
+      }
     },
     "tradeify_lightning_150k": {
       "display_name": "Tradeify - 150K Lightning (Instant)",
@@ -206,9 +392,22 @@
       "min_trading_days": 0,
       "consistency_rule": true,
       "consistency_max_day_percent": 20,
-      "notes": "Instant funded - skip evaluation. EOD trailing. 20% consistency for first payout, scales to 30%."
+      "notes": "Instant funded - skip evaluation. EOD trailing. 20% consistency for first payout, scales to 30%.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 10,
+        "consistency_percent": 35,
+        "first_payout_cap": 3000,
+        "subsequent_payout_cap": 6000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 15000,
+        "profit_split_after": 90,
+        "notes": "Payout windows: 1st-4th, 11th-14th, 21st-24th monthly. 35% consistency rule."
+      }
     },
-
     "lucid_flex_50k": {
       "display_name": "Lucid Trading - 50K LucidFlex Eval",
       "firm": "Lucid Trading",
@@ -221,7 +420,21 @@
       "min_trading_days": 2,
       "consistency_rule": true,
       "consistency_max_day_percent": 50,
-      "notes": "EOD trailing drawdown. NO daily loss limit. 50% consistency in eval only. No consistency once funded."
+      "notes": "EOD trailing drawdown. NO daily loss limit. 50% consistency in eval only. No consistency once funded.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 7,
+        "consistency_percent": null,
+        "first_payout_cap": 2000,
+        "subsequent_payout_cap": 5000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "Weekly payout eligibility after meeting requirements."
+      }
     },
     "lucid_flex_100k": {
       "display_name": "Lucid Trading - 100K LucidFlex Eval",
@@ -235,7 +448,21 @@
       "min_trading_days": 2,
       "consistency_rule": true,
       "consistency_max_day_percent": 50,
-      "notes": "EOD trailing drawdown (4%). NO daily loss limit. 50% consistency in eval only. No consistency once funded."
+      "notes": "EOD trailing drawdown (4%). NO daily loss limit. 50% consistency in eval only. No consistency once funded.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 7,
+        "consistency_percent": null,
+        "first_payout_cap": 3000,
+        "subsequent_payout_cap": 7500,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "Weekly payout eligibility after meeting requirements."
+      }
     },
     "lucid_flex_150k": {
       "display_name": "Lucid Trading - 150K LucidFlex Eval",
@@ -249,9 +476,22 @@
       "min_trading_days": 2,
       "consistency_rule": true,
       "consistency_max_day_percent": 50,
-      "notes": "EOD trailing drawdown (4%). NO daily loss limit. 50% consistency in eval only. No consistency once funded."
+      "notes": "EOD trailing drawdown (4%). NO daily loss limit. 50% consistency in eval only. No consistency once funded.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 7,
+        "consistency_percent": null,
+        "first_payout_cap": 4000,
+        "subsequent_payout_cap": 10000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "Weekly payout eligibility after meeting requirements."
+      }
     },
-
     "lucid_pro_50k": {
       "display_name": "Lucid Trading - 50K LucidPro Eval",
       "firm": "Lucid Trading",
@@ -264,7 +504,21 @@
       "min_trading_days": 5,
       "consistency_rule": true,
       "consistency_max_day_percent": 40,
-      "notes": "EOD trailing drawdown. 40% consistency rule. Daily loss limit is soft breach."
+      "notes": "EOD trailing drawdown. 40% consistency rule. Daily loss limit is soft breach.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 7,
+        "consistency_percent": null,
+        "first_payout_cap": 2000,
+        "subsequent_payout_cap": 5000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "Weekly payout eligibility after meeting requirements."
+      }
     },
     "lucid_pro_100k": {
       "display_name": "Lucid Trading - 100K LucidPro Eval",
@@ -278,7 +532,21 @@
       "min_trading_days": 5,
       "consistency_rule": true,
       "consistency_max_day_percent": 40,
-      "notes": "EOD trailing drawdown (4%). 40% consistency rule. Daily loss limit is soft breach."
+      "notes": "EOD trailing drawdown (4%). 40% consistency rule. Daily loss limit is soft breach.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 7,
+        "consistency_percent": null,
+        "first_payout_cap": 3000,
+        "subsequent_payout_cap": 7500,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "Weekly payout eligibility after meeting requirements."
+      }
     },
     "lucid_pro_150k": {
       "display_name": "Lucid Trading - 150K LucidPro Eval",
@@ -292,9 +560,22 @@
       "min_trading_days": 5,
       "consistency_rule": true,
       "consistency_max_day_percent": 40,
-      "notes": "EOD trailing drawdown (4%). 40% consistency rule. Daily loss limit is soft breach."
+      "notes": "EOD trailing drawdown (4%). 40% consistency rule. Daily loss limit is soft breach.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 7,
+        "consistency_percent": null,
+        "first_payout_cap": 4000,
+        "subsequent_payout_cap": 10000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "Weekly payout eligibility after meeting requirements."
+      }
     },
-
     "lucid_direct_50k": {
       "display_name": "Lucid Trading - 50K LucidDirect (Instant)",
       "firm": "Lucid Trading",
@@ -307,7 +588,21 @@
       "min_trading_days": 0,
       "consistency_rule": true,
       "consistency_max_day_percent": 20,
-      "notes": "Instant funded - skip evaluation. EOD trailing (4%). 20% consistency rule for payouts."
+      "notes": "Instant funded - skip evaluation. EOD trailing (4%). 20% consistency rule for payouts.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 7,
+        "consistency_percent": null,
+        "first_payout_cap": 2000,
+        "subsequent_payout_cap": 5000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "Weekly payout eligibility after meeting requirements."
+      }
     },
     "lucid_direct_100k": {
       "display_name": "Lucid Trading - 100K LucidDirect (Instant)",
@@ -321,7 +616,21 @@
       "min_trading_days": 0,
       "consistency_rule": true,
       "consistency_max_day_percent": 20,
-      "notes": "Instant funded - skip evaluation. EOD trailing (4%). 20% consistency rule for payouts."
+      "notes": "Instant funded - skip evaluation. EOD trailing (4%). 20% consistency rule for payouts.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 7,
+        "consistency_percent": null,
+        "first_payout_cap": 3000,
+        "subsequent_payout_cap": 7500,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "Weekly payout eligibility after meeting requirements."
+      }
     },
     "lucid_direct_150k": {
       "display_name": "Lucid Trading - 150K LucidDirect (Instant)",
@@ -335,9 +644,22 @@
       "min_trading_days": 0,
       "consistency_rule": true,
       "consistency_max_day_percent": 20,
-      "notes": "Instant funded - skip evaluation. EOD trailing (4%). 20% consistency rule for payouts."
+      "notes": "Instant funded - skip evaluation. EOD trailing (4%). 20% consistency rule for payouts.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 7,
+        "consistency_percent": null,
+        "first_payout_cap": 4000,
+        "subsequent_payout_cap": 10000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "Weekly payout eligibility after meeting requirements."
+      }
     },
-
     "tradeday_50k": {
       "display_name": "TradeDay - 50K EOD",
       "firm": "TradeDay",
@@ -350,7 +672,21 @@
       "min_trading_days": 7,
       "consistency_rule": true,
       "consistency_max_day_percent": 30,
-      "notes": "EOD trailing drawdown. 30% consistency rule. No daily loss limit."
+      "notes": "EOD trailing drawdown. 30% consistency rule. No daily loss limit.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 7,
+        "consistency_percent": 30,
+        "first_payout_cap": 2000,
+        "subsequent_payout_cap": 4000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "30% consistency rule on funded accounts."
+      }
     },
     "tradeday_100k": {
       "display_name": "TradeDay - 100K EOD",
@@ -364,7 +700,21 @@
       "min_trading_days": 7,
       "consistency_rule": true,
       "consistency_max_day_percent": 30,
-      "notes": "EOD trailing drawdown. 30% consistency rule. No daily loss limit."
+      "notes": "EOD trailing drawdown. 30% consistency rule. No daily loss limit.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 7,
+        "consistency_percent": 30,
+        "first_payout_cap": 3000,
+        "subsequent_payout_cap": 6000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "30% consistency rule on funded accounts."
+      }
     },
     "mff_50k": {
       "display_name": "My Funded Futures - 50K",
@@ -378,7 +728,22 @@
       "min_trading_days": 5,
       "consistency_rule": true,
       "consistency_max_day_percent": 50,
-      "notes": "EOD trailing drawdown. 50% consistency in eval only (removed once funded). No daily loss limit."
+      "notes": "EOD trailing drawdown. 50% consistency in eval only (removed once funded). No daily loss limit.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 5,
+        "consistency_percent": 40,
+        "first_payout_cap": 1000,
+        "subsequent_payout_cap": 3500,
+        "max_payout_percent": null,
+        "min_balance_buffer": 0,
+        "mll_resets_on_payout": false,
+        "buffer_resets_on_payout": true,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "Fast payouts! 40% consistency. Buffer resets on withdrawal."
+      }
     },
     "mff_100k": {
       "display_name": "My Funded Futures - 100K",
@@ -392,7 +757,22 @@
       "min_trading_days": 5,
       "consistency_rule": true,
       "consistency_max_day_percent": 50,
-      "notes": "EOD trailing drawdown. 50% consistency in eval only (removed once funded). No daily loss limit."
+      "notes": "EOD trailing drawdown. 50% consistency in eval only (removed once funded). No daily loss limit.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 5,
+        "consistency_percent": 40,
+        "first_payout_cap": 1500,
+        "subsequent_payout_cap": 5250,
+        "max_payout_percent": null,
+        "min_balance_buffer": 0,
+        "mll_resets_on_payout": false,
+        "buffer_resets_on_payout": true,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "Fast payouts! 40% consistency. Buffer resets on withdrawal."
+      }
     },
     "take_profit_trader_50k": {
       "display_name": "Take Profit Trader - 50K",
@@ -406,7 +786,21 @@
       "min_trading_days": 5,
       "consistency_rule": true,
       "consistency_max_day_percent": 50,
-      "notes": "EOD trailing drawdown. NO daily loss limit (removed Jan 2025). 50% consistency rule."
+      "notes": "EOD trailing drawdown. NO daily loss limit (removed Jan 2025). 50% consistency rule.",
+      "payout_rules": {
+        "min_profitable_days": 5,
+        "min_profit_per_day": 100,
+        "days_between_payouts": 7,
+        "consistency_percent": 50,
+        "first_payout_cap": 2000,
+        "subsequent_payout_cap": 4000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 80,
+        "notes": "50% consistency rule. 80/20 profit split after first $10K."
+      }
     },
     "bulenox_50k": {
       "display_name": "Bulenox - 50K EOD",
@@ -419,7 +813,21 @@
       "daily_loss_limit": 1100,
       "min_trading_days": 0,
       "consistency_rule": false,
-      "notes": "EOD trailing drawdown. $1,100 DLL (soft breach). No min trading days. 40% consistency for payouts only."
+      "notes": "EOD trailing drawdown. $1,100 DLL (soft breach). No min trading days. 40% consistency for payouts only.",
+      "payout_rules": {
+        "min_profitable_days": 0,
+        "min_profit_per_day": 0,
+        "days_between_payouts": 5,
+        "consistency_percent": null,
+        "first_payout_cap": 1500,
+        "subsequent_payout_cap": 3000,
+        "max_payout_percent": null,
+        "min_balance_buffer": 100,
+        "mll_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "No minimum trading days. Request payouts every 5 days."
+      }
     }
   }
 }
