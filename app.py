@@ -15,6 +15,8 @@ from pathlib import Path
 from simulation import (
     parse_trades_from_csv,
     run_monte_carlo_simulation,
+    run_rolling_window_simulation,
+    run_actual_sequence_test,
     get_trade_statistics,
     AggregateResults
 )
@@ -37,11 +39,12 @@ st.markdown("""
         flex-direction: column;
     }
     .assistant-message {
-        background-color: #f0f2f6;
+        background-color: rgba(240, 242, 246, 0.1);
     }
     .user-message {
-        background-color: #e3f2fd;
+        background-color: rgba(227, 242, 253, 0.1);
     }
+    /* Remove custom metric styling - let Streamlit handle it */
     .pass-rate-high {
         color: #28a745;
         font-size: 2rem;
@@ -81,12 +84,15 @@ def display_chat_message(role: str, content: str):
     """, unsafe_allow_html=True)
 
 
-def create_equity_chart(results: AggregateResults, starting_balance: float):
+def create_equity_chart(results: AggregateResults, starting_balance: float, num_curves: int = 10):
     """Create equity curve visualization"""
     fig = go.Figure()
     
+    # Limit to available curves
+    curves_to_show = min(num_curves, len(results.equity_curves))
+    
     # Plot sample equity curves
-    for i, curve in enumerate(results.equity_curves[:10]):
+    for i, curve in enumerate(results.equity_curves[:curves_to_show]):
         fig.add_trace(go.Scatter(
             y=curve,
             mode='lines',
@@ -96,16 +102,17 @@ def create_equity_chart(results: AggregateResults, starting_balance: float):
         ))
     
     # Add starting balance line
-    max_len = max(len(c) for c in results.equity_curves[:10])
-    fig.add_trace(go.Scatter(
-        y=[starting_balance] * max_len,
-        mode='lines',
-        name='Starting Balance',
-        line=dict(color='gray', dash='dash')
-    ))
+    if curves_to_show > 0:
+        max_len = max(len(c) for c in results.equity_curves[:curves_to_show])
+        fig.add_trace(go.Scatter(
+            y=[starting_balance] * max_len,
+            mode='lines',
+            name='Starting Balance',
+            line=dict(color='gray', dash='dash')
+        ))
     
     fig.update_layout(
-        title="Sample Equity Curves (10 Simulations)",
+        title=f"Sample Equity Curves ({curves_to_show} Simulations)",
         xaxis_title="Trading Days",
         yaxis_title="Account Equity ($)",
         hovermode='x unified',
@@ -331,25 +338,106 @@ def main():
                     st.divider()
                     
                     # Step 4: Run Simulation
-                    st.subheader("Step 4: Run Monte Carlo Simulation")
+                    st.subheader("Step 4: Choose Simulation Mode")
                     
-                    num_sims = st.slider(
-                        "Number of simulations:",
-                        min_value=50,
-                        max_value=500,
-                        value=200,
-                        step=50,
-                        help="More simulations = more accurate results, but takes longer"
+                    # Simulation mode selector with explanations
+                    sim_mode = st.radio(
+                        "How do you want to test your strategy?",
+                        options=["🎲 Monte Carlo (Stress Test)", "📅 Rolling Window (Historical)", "✅ My Actual Sequence"],
+                        help="Each mode tests your strategy differently"
                     )
                     
-                    if st.button("🚀 Run Simulation", type="primary", use_container_width=True):
-                        with st.spinner(f"Running {num_sims} simulations..."):
+                    # Mode explanations
+                    if "Monte Carlo" in sim_mode:
+                        st.info("""
+                        **🎲 Monte Carlo Simulation**
+                        
+                        Randomly shuffles your daily P&L to stress-test your strategy. Answers: 
+                        *"If I trade similarly but market conditions create different sequences of wins/losses, what's my probability of passing?"*
+                        
+                        ⚠️ **Note:** Your actual track record might pass, but Monte Carlo tests worst-case scenarios 
+                        where your losing days cluster together.
+                        """)
+                        
+                        num_sims = st.slider(
+                            "Number of random sequences to test:",
+                            min_value=50,
+                            max_value=500,
+                            value=200,
+                            step=50,
+                            help="More simulations = more accurate probability estimate"
+                        )
+                        
+                    elif "Rolling Window" in sim_mode:
+                        st.info("""
+                        **📅 Rolling Window Simulation**
+                        
+                        Tests starting the challenge at different dates in your backtest, **preserving your actual trade sequence**. 
+                        Answers: *"If I had started this challenge on different days, how often would I have passed?"*
+                        
+                        ✅ More realistic than Monte Carlo because it keeps your actual win/loss patterns intact.
+                        """)
+                        
+                        num_sims = st.slider(
+                            "Number of different start dates to test:",
+                            min_value=20,
+                            max_value=300,
+                            value=100,
+                            step=20,
+                            help="Tests starting the challenge at evenly-spaced dates throughout your backtest"
+                        )
+                        
+                    else:  # Actual Sequence
+                        st.success("""
+                        **✅ Your Actual Sequence**
+                        
+                        Tests your **exact track record** from Day 1 - no shuffling, no rolling. 
+                        Answers: *"Would my actual backtest have passed this prop firm's rules?"*
+                        
+                        This is the most accurate for evaluating a specific historical period.
+                        """)
+                        num_sims = 1  # Only one run needed
+                    
+                    # Run button
+                    button_text = "🚀 Run Simulation" if num_sims > 1 else "🚀 Test My Track Record"
+                    
+                    if st.button(button_text, type="primary", use_container_width=True):
+                        with st.spinner(f"Running {'simulation' if num_sims > 1 else 'test'}..."):
                             try:
-                                results = run_monte_carlo_simulation(
-                                    trades=st.session_state.trades,
-                                    rules=selected_rules,
-                                    num_simulations=num_sims
-                                )
+                                if "Monte Carlo" in sim_mode:
+                                    results = run_monte_carlo_simulation(
+                                        trades=st.session_state.trades,
+                                        rules=selected_rules,
+                                        num_simulations=num_sims
+                                    )
+                                    st.session_state.sim_mode = "monte_carlo"
+                                elif "Rolling Window" in sim_mode:
+                                    results = run_rolling_window_simulation(
+                                        trades=st.session_state.trades,
+                                        rules=selected_rules,
+                                        num_windows=num_sims
+                                    )
+                                    st.session_state.sim_mode = "rolling_window"
+                                else:  # Actual Sequence
+                                    actual_result = run_actual_sequence_test(
+                                        trades=st.session_state.trades,
+                                        rules=selected_rules
+                                    )
+                                    # Wrap single result in AggregateResults format
+                                    results = AggregateResults(
+                                        total_simulations=1,
+                                        pass_count=1 if actual_result.passed else 0,
+                                        pass_rate=1.0 if actual_result.passed else 0.0,
+                                        avg_days_to_target=actual_result.days_to_target,
+                                        median_days_to_target=actual_result.days_to_target,
+                                        avg_max_drawdown=actual_result.max_drawdown,
+                                        failure_reasons={actual_result.failure_reason: 1} if actual_result.failure_reason else {},
+                                        equity_curves=[actual_result.equity_curve],
+                                        daily_pnls=[actual_result.daily_pnl]
+                                    )
+                                    st.session_state.sim_mode = "actual"
+                                    st.session_state.actual_result = actual_result
+                                
                                 st.session_state.results = results
                             except ValueError as e:
                                 st.error(f"❌ Error: {str(e)}")
@@ -364,35 +452,75 @@ def main():
         if st.session_state.results is not None:
             results = st.session_state.results
             rules = st.session_state.selected_firm
+            sim_mode = st.session_state.get('sim_mode', 'monte_carlo')
             
-            st.subheader("📊 Simulation Results")
+            # Different headers based on mode
+            if sim_mode == "actual":
+                st.subheader("✅ Your Actual Track Record")
+            elif sim_mode == "rolling_window":
+                st.subheader("📅 Rolling Window Results")
+            else:
+                st.subheader("🎲 Monte Carlo Results")
             
-            # Pass rate gauge
-            st.plotly_chart(create_pass_rate_gauge(results.pass_rate), use_container_width=True)
+            # For ACTUAL mode, show big PASS/FAIL
+            if sim_mode == "actual":
+                actual_result = st.session_state.get('actual_result')
+                if actual_result and actual_result.passed:
+                    st.success(f"""
+                    # ✅ PASSED!
+                    
+                    Your actual track record **would have passed** this evaluation!
+                    
+                    - **Days to Target:** {actual_result.days_to_target}
+                    - **Max Drawdown Hit:** ${actual_result.max_drawdown:,.2f}
+                    - **Drawdown Limit:** ${rules['max_trailing_drawdown']:,}
+                    - **Buffer Remaining:** ${rules['max_trailing_drawdown'] - actual_result.max_drawdown:,.2f}
+                    """)
+                else:
+                    st.error(f"""
+                    # ❌ FAILED
+                    
+                    Your actual track record **would NOT have passed** this evaluation.
+                    
+                    **Reason:** {actual_result.failure_reason if actual_result else 'Unknown'}
+                    """)
+                    if actual_result:
+                        st.metric("Max Drawdown Hit", f"${actual_result.max_drawdown:,.2f}")
+                        st.metric("Drawdown Limit", f"${rules['max_trailing_drawdown']:,}")
             
-            # Key metrics
-            st.markdown("### Key Metrics")
-            st.metric(
-                "Simulations Passed",
-                f"{results.pass_count} / {results.total_simulations}"
-            )
-            
-            if results.pass_count > 0:
+            else:
+                # For Monte Carlo and Rolling Window, show pass rate gauge
+                st.plotly_chart(create_pass_rate_gauge(results.pass_rate), use_container_width=True)
+                
+                # Mode-specific explanation
+                if sim_mode == "rolling_window":
+                    st.caption(f"Tested {results.total_simulations} different start dates with your actual trade sequence preserved.")
+                else:
+                    st.caption(f"Tested {results.total_simulations} randomly shuffled sequences of your daily P&L.")
+                
+                # Key metrics
+                st.markdown("### Key Metrics")
                 st.metric(
-                    "Avg Days to Target",
-                    f"{results.avg_days_to_target:.1f} days"
+                    "Tests Passed" if sim_mode == "rolling_window" else "Simulations Passed",
+                    f"{results.pass_count} / {results.total_simulations}"
                 )
+                
+                if results.pass_count > 0:
+                    st.metric(
+                        "Avg Days to Target",
+                        f"{results.avg_days_to_target:.1f} days"
+                    )
+                    st.metric(
+                        "Median Days to Target",
+                        f"{results.median_days_to_target:.0f} days"
+                    )
+                
                 st.metric(
-                    "Median Days to Target",
-                    f"{results.median_days_to_target:.0f} days"
+                    "Avg Max Drawdown Hit",
+                    f"${results.avg_max_drawdown:,.0f}"
                 )
             
-            st.metric(
-                "Avg Max Drawdown Hit",
-                f"${results.avg_max_drawdown:,.0f}"
-            )
-            
-            # Show the rules being tested
+            # Show the rules being tested (all modes)
             st.markdown("### 📋 Rules Being Tested")
             rules_col1, rules_col2 = st.columns(2)
             with rules_col1:
@@ -410,10 +538,14 @@ def main():
                 st.markdown(f"**Min Days:** {rules.get('min_trading_days', 0)}")
             
             # Failure Reasons Summary - DETAILED BREAKDOWN
-            if results.failure_reasons:
+            if results.failure_reasons and sim_mode != "actual":
                 st.markdown("---")
-                st.markdown("## ❌ WHY SIMULATIONS FAILED")
-                st.markdown("*Understanding why your strategy didn't pass helps you improve*")
+                if sim_mode == "rolling_window":
+                    st.markdown("## ❌ WHY TESTS FAILED")
+                    st.markdown("*These are the reasons your strategy failed when starting at different dates*")
+                else:
+                    st.markdown("## ❌ WHY SIMULATIONS FAILED")
+                    st.markdown("*These are worst-case scenarios from randomly shuffled trade sequences*")
                 
                 # Calculate totals
                 total_failures = results.total_simulations - results.pass_count
@@ -580,8 +712,21 @@ def main():
         chart_cols = st.columns(2)
         
         with chart_cols[0]:
+            # Slider for number of curves (only show if more than 1 simulation)
+            if results.total_simulations > 1:
+                max_curves = min(50, len(results.equity_curves))
+                num_curves = st.slider(
+                    "Number of equity curves to display:",
+                    min_value=1,
+                    max_value=max_curves,
+                    value=min(10, max_curves),
+                    help="Show more curves to see the range of possible outcomes"
+                )
+            else:
+                num_curves = 1
+            
             # Equity curves
-            fig = create_equity_chart(results, rules['account_size'])
+            fig = create_equity_chart(results, rules['account_size'], num_curves)
             st.plotly_chart(fig, use_container_width=True)
         
         with chart_cols[1]:
