@@ -517,9 +517,9 @@ def run_monte_carlo_simulation(
             
             failure_reasons[category] = failure_reasons.get(category, 0) + 1
     
-    # Get sample equity curves (first 10 for visualization)
-    sample_curves = [r.equity_curve for r in results[:10]]
-    sample_daily_pnls = [r.daily_pnl for r in results[:10]]
+    # Get sample equity curves (up to 50 for visualization with user selection)
+    sample_curves = [r.equity_curve for r in results[:50]]
+    sample_daily_pnls = [r.daily_pnl for r in results[:50]]
     
     return AggregateResults(
         total_simulations=num_simulations,
@@ -532,6 +532,232 @@ def run_monte_carlo_simulation(
         equity_curves=sample_curves,
         daily_pnls=sample_daily_pnls
     )
+
+
+def run_single_simulation_sequential(
+    daily_pnls: List[float],
+    rules: Dict,
+    starting_balance: float,
+    start_index: int = 0
+) -> SimulationResult:
+    """
+    Run a single simulation with ACTUAL trade sequence (no shuffling).
+    Starts from a specific index in the daily P&L list.
+    
+    Args:
+        daily_pnls: List of daily P&L values (in original order)
+        rules: Prop firm rules dictionary
+        starting_balance: Account starting balance
+        start_index: Which day to start from (for rolling window)
+    
+    Returns:
+        SimulationResult with pass/fail and metrics
+    """
+    # Use trades starting from start_index
+    sequence_pnls = daily_pnls[start_index:]
+    
+    # Initialize tracking variables
+    equity = starting_balance
+    high_water_mark = starting_balance
+    equity_curve = [equity]
+    max_drawdown = 0
+    trading_days = 0
+    daily_profits = []
+    
+    # Rule thresholds
+    profit_target = rules.get('profit_target', float('inf'))
+    max_trailing_dd = rules.get('max_trailing_drawdown', float('inf'))
+    daily_loss_limit = rules.get('daily_loss_limit')
+    trailing_type = rules.get('trailing_drawdown_type', 'end_of_day')
+    trailing_stops_at = rules.get('trailing_stops_at')
+    
+    failure_reason = None
+    target_reached = False
+    days_to_target = 0
+    
+    for day_idx, daily_pnl in enumerate(sequence_pnls):
+        trading_days += 1
+        daily_profits.append(daily_pnl)
+        
+        # Check daily loss limit BEFORE applying P&L (soft breach in most firms)
+        if daily_loss_limit and daily_pnl < -daily_loss_limit:
+            failure_reason = f"Daily Loss Limit Breached (lost ${abs(daily_pnl):,.0f}, limit ${daily_loss_limit:,})"
+            break
+        
+        # Apply daily P&L
+        equity += daily_pnl
+        equity_curve.append(equity)
+        
+        # Update high water mark based on trailing type
+        if trailing_type == 'end_of_day':
+            if trailing_stops_at and high_water_mark >= trailing_stops_at:
+                pass
+            else:
+                high_water_mark = max(high_water_mark, equity)
+        else:
+            high_water_mark = max(high_water_mark, equity)
+        
+        # Calculate current drawdown from high water mark
+        current_dd = high_water_mark - equity
+        max_drawdown = max(max_drawdown, current_dd)
+        
+        # Check trailing drawdown violation
+        if current_dd > max_trailing_dd:
+            dd_type = "Intraday" if trailing_type == 'intraday' else "EOD"
+            failure_reason = f"Max Drawdown Exceeded ({dd_type}: ${current_dd:,.0f} > ${max_trailing_dd:,} limit)"
+            break
+        
+        # Check if profit target reached
+        profit = equity - starting_balance
+        if profit >= profit_target and not target_reached:
+            target_reached = True
+            days_to_target = trading_days
+            break  # Stop once target is reached (challenge passed)
+    
+    # Check minimum trading days
+    min_days = rules.get('min_trading_days', 0)
+    if target_reached and trading_days < min_days:
+        days_to_target = max(days_to_target, min_days)
+    
+    # Check consistency rule
+    if rules.get('consistency_rule') and target_reached and failure_reason is None:
+        max_day_pct = rules.get('consistency_max_day_percent', 50)
+        total_profit = sum(p for p in daily_profits if p > 0)
+        if total_profit > 0:
+            best_day = max(daily_profits)
+            best_day_pct = (best_day / total_profit) * 100
+            if best_day_pct > max_day_pct:
+                failure_reason = f"Consistency Rule Violated (best day {best_day_pct:.0f}% > {max_day_pct}% limit)"
+                target_reached = False
+    
+    # Add failure reason for not reaching profit target
+    if not target_reached and failure_reason is None:
+        final_profit = equity - starting_balance
+        pct_of_target = (final_profit / profit_target) * 100 if profit_target > 0 else 0
+        failure_reason = f"Profit Target Not Reached (${final_profit:,.0f} = {pct_of_target:.0f}% of ${profit_target:,} target)"
+    
+    passed = target_reached and failure_reason is None
+    
+    return SimulationResult(
+        passed=passed,
+        final_equity=equity,
+        max_drawdown=max_drawdown,
+        days_to_target=days_to_target if target_reached else 0,
+        failure_reason=failure_reason,
+        equity_curve=equity_curve,
+        daily_pnl=daily_profits
+    )
+
+
+def run_rolling_window_simulation(
+    trades: List[Dict],
+    rules: Dict,
+    num_windows: int = 200
+) -> AggregateResults:
+    """
+    Run rolling window simulation - tests starting the challenge at different dates.
+    Preserves actual trade sequence (no shuffling).
+    
+    Args:
+        trades: List of trade dictionaries
+        rules: Prop firm rules dictionary
+        num_windows: Number of different start dates to test
+    
+    Returns:
+        AggregateResults with pass rate and statistics
+    """
+    # Group trades by day
+    daily_data = group_trades_by_day(trades)
+    daily_pnls = [d['daily_pnl'] for d in daily_data]
+    
+    if len(daily_pnls) < 10:
+        raise ValueError(f"Need at least 10 trading days for rolling window simulation. Found {len(daily_pnls)} days.")
+    
+    starting_balance = rules.get('account_size', 50000)
+    
+    # Calculate step size to spread windows across the data
+    # Leave at least 30 days at the end for a meaningful test
+    min_days_needed = 30
+    usable_days = max(1, len(daily_pnls) - min_days_needed)
+    
+    # Generate evenly spaced start indices
+    if num_windows >= usable_days:
+        start_indices = list(range(usable_days))
+    else:
+        step = usable_days / num_windows
+        start_indices = [int(i * step) for i in range(num_windows)]
+    
+    # Run simulations
+    results = []
+    for start_idx in start_indices:
+        result = run_single_simulation_sequential(daily_pnls, rules, starting_balance, start_idx)
+        results.append(result)
+    
+    # Aggregate results
+    pass_count = sum(1 for r in results if r.passed)
+    pass_rate = pass_count / len(results)
+    
+    passing_results = [r for r in results if r.passed]
+    if passing_results:
+        avg_days = np.mean([r.days_to_target for r in passing_results])
+        median_days = np.median([r.days_to_target for r in passing_results])
+    else:
+        avg_days = 0
+        median_days = 0
+    
+    avg_max_dd = np.mean([r.max_drawdown for r in results])
+    
+    # Count failure reasons with cleaner categories
+    failure_reasons = {}
+    for r in results:
+        if r.failure_reason:
+            reason = r.failure_reason
+            if "Max Drawdown Exceeded" in reason:
+                category = "Max Drawdown Exceeded"
+            elif "Daily Loss Limit" in reason:
+                category = "Daily Loss Limit Breached"
+            elif "Consistency Rule" in reason:
+                category = "Consistency Rule Violated"
+            elif "Profit Target Not Reached" in reason:
+                category = "Profit Target Not Reached"
+            else:
+                category = reason.split('(')[0].strip()
+            
+            failure_reasons[category] = failure_reasons.get(category, 0) + 1
+    
+    # Get sample equity curves (up to 50 for visualization with user selection)
+    sample_curves = [r.equity_curve for r in results[:50]]
+    sample_daily_pnls = [r.daily_pnl for r in results[:50]]
+    
+    return AggregateResults(
+        total_simulations=len(results),
+        pass_count=pass_count,
+        pass_rate=pass_rate,
+        avg_days_to_target=avg_days,
+        median_days_to_target=median_days,
+        avg_max_drawdown=avg_max_dd,
+        failure_reasons=failure_reasons,
+        equity_curves=sample_curves,
+        daily_pnls=sample_daily_pnls
+    )
+
+
+def run_actual_sequence_test(
+    trades: List[Dict],
+    rules: Dict
+) -> SimulationResult:
+    """
+    Test your EXACT track record against prop firm rules.
+    No shuffling, no rolling - just your actual sequence from day 1.
+    
+    Returns:
+        SimulationResult for your actual track record
+    """
+    daily_data = group_trades_by_day(trades)
+    daily_pnls = [d['daily_pnl'] for d in daily_data]
+    starting_balance = rules.get('account_size', 50000)
+    
+    return run_single_simulation_sequential(daily_pnls, rules, starting_balance, start_index=0)
 
 
 def get_trade_statistics(trades: List[Dict]) -> Dict:
