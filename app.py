@@ -42,11 +42,6 @@ st.markdown("""
     .user-message {
         background-color: #e3f2fd;
     }
-    .stMetric {
-        background-color: #f8f9fa;
-        padding: 1rem;
-        border-radius: 0.5rem;
-    }
     .pass-rate-high {
         color: #28a745;
         font-size: 2rem;
