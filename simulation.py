@@ -760,6 +760,262 @@ def run_actual_sequence_test(
     return run_single_simulation_sequential(daily_pnls, rules, starting_balance, start_index=0)
 
 
+@dataclass
+class PayoutSimulationResult:
+    """Results from a funded account payout simulation"""
+    passed_eval: bool
+    days_to_pass_eval: int
+    days_to_first_payout: int
+    total_payouts: int
+    total_withdrawn: float
+    total_kept_after_split: float
+    avg_payout_amount: float
+    account_blown: bool
+    blown_on_day: int
+    final_account_balance: float
+    payout_history: List[Dict]  # List of {day, amount, balance_after}
+
+
+def simulate_funded_account_with_payouts(
+    trades: List[Dict],
+    rules: Dict,
+    max_days: int = None
+) -> PayoutSimulationResult:
+    """
+    Simulate passing eval THEN trading the funded account with payouts.
+    Uses actual trade sequence (no shuffling).
+    
+    This answers: "If I passed the eval, how many payouts could I take 
+    and how much money would I actually withdraw?"
+    """
+    daily_data = group_trades_by_day(trades)
+    daily_pnls = [d['daily_pnl'] for d in daily_data]
+    
+    if max_days:
+        daily_pnls = daily_pnls[:max_days]
+    
+    starting_balance = rules.get('account_size', 50000)
+    profit_target = rules.get('profit_target', float('inf'))
+    max_trailing_dd = rules.get('max_trailing_drawdown', float('inf'))
+    daily_loss_limit = rules.get('daily_loss_limit')
+    trailing_type = rules.get('trailing_drawdown_type', 'end_of_day')
+    
+    # Payout rules
+    payout_rules = rules.get('payout_rules', {})
+    min_profitable_days = payout_rules.get('min_profitable_days', 5)
+    min_profit_per_day = payout_rules.get('min_profit_per_day', 100)
+    days_between_payouts = payout_rules.get('days_between_payouts', 5)
+    payout_consistency = payout_rules.get('consistency_percent')
+    first_payout_cap = payout_rules.get('first_payout_cap', 2000)
+    subsequent_payout_cap = payout_rules.get('subsequent_payout_cap', 4000)
+    max_payout_percent = payout_rules.get('max_payout_percent')  # e.g., 50% for Topstep
+    min_balance_buffer = payout_rules.get('min_balance_buffer', 100)
+    mll_resets_on_payout = payout_rules.get('mll_resets_on_payout', False)
+    buffer_resets_on_payout = payout_rules.get('buffer_resets_on_payout', False)
+    profit_split_first = payout_rules.get('profit_split_first', 10000)
+    profit_split_after = payout_rules.get('profit_split_after', 90)
+    
+    # Phase 1: Evaluation
+    equity = starting_balance
+    high_water_mark = starting_balance
+    eval_passed = False
+    days_to_pass = 0
+    
+    for day_idx, daily_pnl in enumerate(daily_pnls):
+        # Check DLL
+        if daily_loss_limit and daily_pnl < -daily_loss_limit:
+            return PayoutSimulationResult(
+                passed_eval=False, days_to_pass_eval=0, days_to_first_payout=0,
+                total_payouts=0, total_withdrawn=0, total_kept_after_split=0,
+                avg_payout_amount=0, account_blown=True, blown_on_day=day_idx+1,
+                final_account_balance=equity + daily_pnl, payout_history=[]
+            )
+        
+        equity += daily_pnl
+        
+        if trailing_type == 'end_of_day':
+            high_water_mark = max(high_water_mark, equity)
+        else:
+            high_water_mark = max(high_water_mark, equity)
+        
+        current_dd = high_water_mark - equity
+        if current_dd > max_trailing_dd:
+            return PayoutSimulationResult(
+                passed_eval=False, days_to_pass_eval=0, days_to_first_payout=0,
+                total_payouts=0, total_withdrawn=0, total_kept_after_split=0,
+                avg_payout_amount=0, account_blown=True, blown_on_day=day_idx+1,
+                final_account_balance=equity, payout_history=[]
+            )
+        
+        profit = equity - starting_balance
+        if profit >= profit_target and not eval_passed:
+            eval_passed = True
+            days_to_pass = day_idx + 1
+            break
+    
+    if not eval_passed:
+        return PayoutSimulationResult(
+            passed_eval=False, days_to_pass_eval=0, days_to_first_payout=0,
+            total_payouts=0, total_withdrawn=0, total_kept_after_split=0,
+            avg_payout_amount=0, account_blown=False, blown_on_day=0,
+            final_account_balance=equity, payout_history=[]
+        )
+    
+    # Phase 2: Funded Account with Payouts
+    # Reset for funded phase - start from where eval ended
+    funded_start_day = days_to_pass
+    remaining_pnls = daily_pnls[funded_start_day:]
+    
+    # Funded account starts fresh
+    funded_balance = starting_balance + (equity - starting_balance)  # Keep eval profits
+    high_water_mark = funded_balance
+    min_balance = starting_balance + min_balance_buffer  # Can't go below this
+    
+    # For MLL tracking (especially Topstep where MLL resets to $0 after payout)
+    current_mll = max_trailing_dd  # Start with full drawdown allowance
+    
+    profitable_days_count = 0
+    days_since_last_payout = 0
+    total_payouts = 0
+    total_withdrawn = 0.0
+    total_kept = 0.0
+    payout_history = []
+    days_to_first_payout = 0
+    account_blown = False
+    blown_on_day = 0
+    
+    # Track profits for consistency rule
+    profits_since_last_payout = []
+    
+    for day_idx, daily_pnl in enumerate(remaining_pnls):
+        actual_day = funded_start_day + day_idx + 1
+        days_since_last_payout += 1
+        
+        # Check DLL
+        if daily_loss_limit and daily_pnl < -daily_loss_limit:
+            account_blown = True
+            blown_on_day = actual_day
+            break
+        
+        funded_balance += daily_pnl
+        profits_since_last_payout.append(daily_pnl)
+        
+        # Track profitable days
+        if daily_pnl >= min_profit_per_day:
+            profitable_days_count += 1
+        
+        # Update HWM
+        high_water_mark = max(high_water_mark, funded_balance)
+        
+        # Check drawdown - use current MLL (may have been reset after payout)
+        if mll_resets_on_payout and total_payouts > 0:
+            # Topstep: After first payout, MLL is $0 (can't go below starting balance)
+            if funded_balance <= starting_balance:
+                account_blown = True
+                blown_on_day = actual_day
+                break
+        else:
+            current_dd = high_water_mark - funded_balance
+            if current_dd > current_mll:
+                account_blown = True
+                blown_on_day = actual_day
+                break
+        
+        # Check if below minimum balance
+        if funded_balance < min_balance:
+            account_blown = True
+            blown_on_day = actual_day
+            break
+        
+        # Check payout eligibility
+        can_payout = (
+            profitable_days_count >= min_profitable_days and
+            days_since_last_payout >= days_between_payouts and
+            funded_balance > min_balance
+        )
+        
+        # Check consistency rule for payout
+        if can_payout and payout_consistency:
+            total_profit = sum(p for p in profits_since_last_payout if p > 0)
+            if total_profit > 0:
+                best_day = max(profits_since_last_payout)
+                best_day_pct = (best_day / total_profit) * 100
+                if best_day_pct > payout_consistency:
+                    can_payout = False
+        
+        if can_payout:
+            # Calculate available for withdrawal
+            available = funded_balance - min_balance
+            
+            # Apply payout cap
+            if total_payouts == 0:
+                payout_cap = first_payout_cap
+            else:
+                payout_cap = subsequent_payout_cap
+            
+            # Apply percentage cap if exists (Topstep 50% rule)
+            if max_payout_percent:
+                pct_cap = available * (max_payout_percent / 100)
+                payout_cap = min(payout_cap, pct_cap)
+            
+            payout_amount = min(available, payout_cap)
+            
+            if payout_amount >= 100:  # Minimum payout threshold
+                # Calculate profit split
+                if total_withdrawn < profit_split_first:
+                    # 100% of first X profits
+                    kept = payout_amount
+                else:
+                    # Split after threshold
+                    kept = payout_amount * (profit_split_after / 100)
+                
+                # Execute payout
+                funded_balance -= payout_amount
+                total_payouts += 1
+                total_withdrawn += payout_amount
+                total_kept += kept
+                
+                payout_history.append({
+                    'day': actual_day,
+                    'amount': payout_amount,
+                    'kept': kept,
+                    'balance_after': funded_balance
+                })
+                
+                if days_to_first_payout == 0:
+                    days_to_first_payout = actual_day
+                
+                # Reset counters
+                profitable_days_count = 0
+                days_since_last_payout = 0
+                profits_since_last_payout = []
+                
+                # Handle MLL reset (Topstep)
+                if mll_resets_on_payout:
+                    # MLL goes to $0 - can't lose below starting balance
+                    high_water_mark = funded_balance
+                
+                # Handle buffer reset (MFF)
+                if buffer_resets_on_payout:
+                    high_water_mark = funded_balance
+    
+    avg_payout = total_withdrawn / total_payouts if total_payouts > 0 else 0
+    
+    return PayoutSimulationResult(
+        passed_eval=True,
+        days_to_pass_eval=days_to_pass,
+        days_to_first_payout=days_to_first_payout,
+        total_payouts=total_payouts,
+        total_withdrawn=total_withdrawn,
+        total_kept_after_split=total_kept,
+        avg_payout_amount=avg_payout,
+        account_blown=account_blown,
+        blown_on_day=blown_on_day,
+        final_account_balance=funded_balance,
+        payout_history=payout_history
+    )
+
+
 def get_trade_statistics(trades: List[Dict]) -> Dict:
     """Calculate basic statistics from trade data"""
     pnls = [t['pnl'] for t in trades]
