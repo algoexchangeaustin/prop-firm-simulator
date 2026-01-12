@@ -17,8 +17,10 @@ from simulation import (
     run_monte_carlo_simulation,
     run_rolling_window_simulation,
     run_actual_sequence_test,
+    simulate_funded_account_with_payouts,
     get_trade_statistics,
-    AggregateResults
+    AggregateResults,
+    PayoutSimulationResult
 )
 
 # Page config
@@ -737,6 +739,118 @@ def main():
                     st.plotly_chart(fig, use_container_width=True)
             else:
                 st.info("No failures to analyze - all simulations passed! 🎉")
+        
+        # Payout Projection Section
+        st.divider()
+        st.subheader("💰 Payout Projection")
+        st.caption("See how much you could potentially withdraw after passing the evaluation")
+        
+        # Check if firm has payout rules
+        if 'payout_rules' in rules and st.session_state.trades:
+            payout_rules = rules['payout_rules']
+            
+            # Show payout rules summary
+            with st.expander("📋 View Funded Account Payout Rules", expanded=False):
+                pr_col1, pr_col2 = st.columns(2)
+                with pr_col1:
+                    st.markdown(f"**Min Profitable Days:** {payout_rules.get('min_profitable_days', 'N/A')}")
+                    st.markdown(f"**Min Profit/Day:** ${payout_rules.get('min_profit_per_day', 0):,}")
+                    st.markdown(f"**Days Between Payouts:** {payout_rules.get('days_between_payouts', 'N/A')}")
+                    if payout_rules.get('consistency_percent'):
+                        st.markdown(f"**Payout Consistency:** {payout_rules['consistency_percent']}% max/day")
+                    else:
+                        st.markdown("**Payout Consistency:** None")
+                with pr_col2:
+                    st.markdown(f"**First Payout Cap:** ${payout_rules.get('first_payout_cap', 0):,}")
+                    st.markdown(f"**Subsequent Cap:** ${payout_rules.get('subsequent_payout_cap', 0):,}")
+                    if payout_rules.get('max_payout_percent'):
+                        st.markdown(f"**Max % Per Payout:** {payout_rules['max_payout_percent']}%")
+                    if payout_rules.get('mll_resets_on_payout'):
+                        st.warning("⚠️ **MLL resets to $0 after first payout!**")
+                    st.markdown(f"**Profit Split:** 100% first ${payout_rules.get('profit_split_first', 10000):,}, then {payout_rules.get('profit_split_after', 90)}%")
+                
+                if payout_rules.get('notes'):
+                    st.info(payout_rules['notes'])
+            
+            # Run payout simulation button
+            if st.button("📊 Run Payout Projection", type="secondary"):
+                with st.spinner("Simulating funded account with payouts..."):
+                    try:
+                        payout_result = simulate_funded_account_with_payouts(
+                            trades=st.session_state.trades,
+                            rules=rules
+                        )
+                        st.session_state.payout_result = payout_result
+                    except Exception as e:
+                        st.error(f"Error running payout simulation: {str(e)}")
+            
+            # Display payout results
+            if 'payout_result' in st.session_state and st.session_state.payout_result:
+                pr = st.session_state.payout_result
+                
+                if not pr.passed_eval:
+                    st.error(f"""
+                    ### ❌ Did Not Pass Evaluation
+                    
+                    Your actual track record would not have passed this evaluation.
+                    {"Account blown on day " + str(pr.blown_on_day) if pr.account_blown else "Did not reach profit target"}
+                    """)
+                else:
+                    # Success metrics
+                    st.success(f"### ✅ Evaluation Passed on Day {pr.days_to_pass_eval}")
+                    
+                    payout_cols = st.columns(4)
+                    with payout_cols[0]:
+                        st.metric("Days to First Payout", f"{pr.days_to_first_payout}" if pr.days_to_first_payout > 0 else "N/A")
+                    with payout_cols[1]:
+                        st.metric("Total Payouts", pr.total_payouts)
+                    with payout_cols[2]:
+                        st.metric("Total Withdrawn", f"${pr.total_withdrawn:,.0f}")
+                    with payout_cols[3]:
+                        st.metric("You Keep (after split)", f"${pr.total_kept_after_split:,.0f}")
+                    
+                    # Additional info
+                    info_cols = st.columns(3)
+                    with info_cols[0]:
+                        st.metric("Avg Payout Amount", f"${pr.avg_payout_amount:,.0f}" if pr.avg_payout_amount > 0 else "N/A")
+                    with info_cols[1]:
+                        st.metric("Final Balance", f"${pr.final_account_balance:,.0f}")
+                    with info_cols[2]:
+                        if pr.account_blown:
+                            st.metric("Account Status", f"Blown Day {pr.blown_on_day}", delta="Lost", delta_color="inverse")
+                        else:
+                            st.metric("Account Status", "Active ✅")
+                    
+                    # Payout history table
+                    if pr.payout_history:
+                        st.markdown("#### 📜 Payout History")
+                        history_data = []
+                        for i, p in enumerate(pr.payout_history):
+                            history_data.append({
+                                'Payout #': i + 1,
+                                'Day': p['day'],
+                                'Amount': f"${p['amount']:,.0f}",
+                                'You Keep': f"${p['kept']:,.0f}",
+                                'Balance After': f"${p['balance_after']:,.0f}"
+                            })
+                        st.dataframe(pd.DataFrame(history_data), use_container_width=True, hide_index=True)
+                    
+                    # Warnings/Insights
+                    if payout_rules.get('mll_resets_on_payout') and pr.total_payouts > 0:
+                        st.warning(f"""
+                        ⚠️ **Topstep MLL Warning:** After your first payout, the Maximum Loss Limit 
+                        reset to $0. This means your account cannot go below ${rules['account_size']:,} 
+                        or it will be blown. This significantly increases risk after the first withdrawal.
+                        """)
+                    
+                    if pr.account_blown and pr.total_payouts > 0:
+                        st.info(f"""
+                        💡 **Good news:** Even though the account was blown on day {pr.blown_on_day}, 
+                        you already withdrew **${pr.total_withdrawn:,.0f}** (keeping **${pr.total_kept_after_split:,.0f}**).
+                        This is still a profitable outcome!
+                        """)
+        else:
+            st.info("Payout rules not available for this firm. Contact support to add them.")
         
         # Quick Comparison Section
         st.divider()
