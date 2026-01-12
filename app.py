@@ -772,28 +772,48 @@ def main():
                 if payout_rules.get('notes'):
                     st.info(payout_rules['notes'])
             
+            # Withdrawal strategy slider
+            st.markdown("#### 🎚️ Withdrawal Strategy")
+            withdrawal_pct = st.slider(
+                "What % of available profits to withdraw each payout?",
+                min_value=10,
+                max_value=100,
+                value=100,
+                step=10,
+                help="Lower percentage = more cushion left in account = potentially longer account life. 100% = withdraw maximum allowed each time."
+            )
+            
+            if withdrawal_pct < 100:
+                st.info(f"💡 **Conservative Strategy:** You'll withdraw only {withdrawal_pct}% of available profits, leaving {100-withdrawal_pct}% as extra cushion to extend account longevity.")
+            else:
+                st.caption("📈 **Aggressive Strategy:** Withdrawing maximum allowed each payout.")
+            
             # Run payout simulation button
             if st.button("📊 Run Payout Projection", type="secondary"):
                 with st.spinner("Simulating funded account with payouts..."):
                     try:
                         payout_result = simulate_funded_account_with_payouts(
                             trades=st.session_state.trades,
-                            rules=rules
+                            rules=rules,
+                            withdrawal_percent=withdrawal_pct
                         )
                         st.session_state.payout_result = payout_result
+                        st.session_state.payout_withdrawal_pct = withdrawal_pct
                     except Exception as e:
                         st.error(f"Error running payout simulation: {str(e)}")
             
             # Display payout results
             if 'payout_result' in st.session_state and st.session_state.payout_result:
                 pr = st.session_state.payout_result
+                used_pct = st.session_state.get('payout_withdrawal_pct', 100)
                 
                 if not pr.passed_eval:
                     st.error(f"""
                     ### ❌ Did Not Pass Evaluation
                     
                     Your actual track record would not have passed this evaluation.
-                    {"Account blown on day " + str(pr.blown_on_day) if pr.account_blown else "Did not reach profit target"}
+                    
+                    **Reason:** {pr.blow_reason}
                     """)
                 else:
                     # Success metrics
@@ -814,14 +834,56 @@ def main():
                     with info_cols[0]:
                         st.metric("Avg Payout Amount", f"${pr.avg_payout_amount:,.0f}" if pr.avg_payout_amount > 0 else "N/A")
                     with info_cols[1]:
-                        st.metric("Final Balance", f"${pr.final_account_balance:,.0f}")
+                        st.metric("Peak Balance", f"${pr.peak_balance:,.0f}")
                     with info_cols[2]:
                         if pr.account_blown:
-                            st.metric("Account Status", f"Blown Day {pr.blown_on_day}", delta="Lost", delta_color="inverse")
+                            st.metric("Account Lifespan", f"{pr.blown_on_day} days", delta="Blown", delta_color="inverse")
                         else:
                             st.metric("Account Status", "Active ✅")
                     
-                    # Payout history table
+                    # Account Blown Explanation
+                    if pr.account_blown:
+                        st.markdown("---")
+                        st.markdown("### ❌ Why The Account Was Blown")
+                        st.error(f"""
+                        **Day {pr.blown_on_day}:** {pr.blow_reason}
+                        
+                        **Final Balance:** ${pr.final_account_balance:,.0f}
+                        """)
+                        
+                        # Provide context
+                        if pr.total_payouts > 0:
+                            st.markdown(f"""
+                            #### 📊 The Full Picture
+                            
+                            | Metric | Value |
+                            |--------|-------|
+                            | Days Trading | {pr.blown_on_day} |
+                            | Payouts Taken | {pr.total_payouts} |
+                            | Total Withdrawn | ${pr.total_withdrawn:,.0f} |
+                            | **You Kept** | **${pr.total_kept_after_split:,.0f}** |
+                            | Final Balance (lost) | ${pr.final_account_balance:,.0f} |
+                            
+                            **Net Result:** Even though the account was blown, you extracted **${pr.total_kept_after_split:,.0f}** in profits first!
+                            """)
+                            
+                            # Suggestion for conservative strategy
+                            if used_pct == 100:
+                                st.info(f"""
+                                💡 **Try a Conservative Strategy:** Slide the withdrawal percentage down to 50-70% 
+                                to leave more cushion in the account. This might extend the account's lifespan 
+                                and potentially allow for more total payouts.
+                                """)
+                    else:
+                        st.success(f"""
+                        ### ✅ Account Survived!
+                        
+                        Your account remained active through all {len(pr.equity_curve)} trading days in your backtest.
+                        
+                        **Final Balance:** ${pr.final_account_balance:,.0f}
+                        """)
+                    
+                    # Payout history table with cushion info
                     if pr.payout_history:
                         st.markdown("#### 📜 Payout History")
                         history_data = []
@@ -829,25 +891,26 @@ def main():
                             history_data.append({
                                 'Payout #': i + 1,
                                 'Day': p['day'],
-                                'Amount': f"${p['amount']:,.0f}",
+                                'Withdrawn': f"${p['amount']:,.0f}",
                                 'You Keep': f"${p['kept']:,.0f}",
-                                'Balance After': f"${p['balance_after']:,.0f}"
+                                'Balance After': f"${p['balance_after']:,.0f}",
+                                'Cushion Left': f"${p.get('cushion_after', 0):,.0f}",
+                                'Left in Account': f"${p.get('available_not_taken', 0):,.0f}" if p.get('available_not_taken', 0) > 0 else "-"
                             })
                         st.dataframe(pd.DataFrame(history_data), use_container_width=True, hide_index=True)
+                        
+                        # Explain cushion column
+                        st.caption("**Cushion Left** = Buffer above minimum balance after payout. Higher cushion = more room before account is blown.")
                     
-                    # Warnings/Insights
+                    # MLL Warning for Topstep
                     if payout_rules.get('mll_resets_on_payout') and pr.total_payouts > 0:
                         st.warning(f"""
                         ⚠️ **Topstep MLL Warning:** After your first payout, the Maximum Loss Limit 
                         reset to $0. This means your account cannot go below ${rules['account_size']:,} 
                         or it will be blown. This significantly increases risk after the first withdrawal.
-                        """)
-                    
-                    if pr.account_blown and pr.total_payouts > 0:
-                        st.info(f"""
-                        💡 **Good news:** Even though the account was blown on day {pr.blown_on_day}, 
-                        you already withdrew **${pr.total_withdrawn:,.0f}** (keeping **${pr.total_kept_after_split:,.0f}**).
-                        This is still a profitable outcome!
+                        
+                        **Strategy tip:** Some traders prefer to build up a large cushion before taking 
+                        their first payout, knowing that risk increases dramatically afterward.
                         """)
         else:
             st.info("Payout rules not available for this firm. Contact support to add them.")
