@@ -74,7 +74,7 @@ st.markdown("""
     }
     /* Custom button styling - AlgoExchange blue */
     .stButton > button {
-        background-color: #2EBCF0;
+        background-color: #1976D2;
         color: white;
         border: none;
         border-radius: 8px;
@@ -82,16 +82,16 @@ st.markdown("""
         font-weight: 600;
     }
     .stButton > button:hover {
-        background-color: #25A8D8;
+        background-color: #1565C0;
         color: white;
         border: none;
     }
     .stButton > button:active {
-        background-color: #1E94C0;
+        background-color: #0D47A1;
         color: white;
     }
     .stButton > button:focus {
-        background-color: #2EBCF0;
+        background-color: #1976D2;
         color: white;
         box-shadow: none;
     }
@@ -217,19 +217,40 @@ def main():
     # Load prop firms
     prop_firms = load_prop_firms()
 
-    # Header with logo (auto-detects light/dark mode)
-    # Detect theme - default to dark if not set
-    try:
-        theme_base = st.get_option("theme.base")
-        is_dark = theme_base == "dark" or theme_base is None  # Default to dark
-    except:
-        is_dark = True  # Default to dark mode
-    
-    logo_file = "logo_dark.png" if is_dark else "logo_light.png"
-    
+    # Header with logo (uses CSS to auto-switch based on user's system theme)
     col_logo, col_title = st.columns([1, 4])
     with col_logo:
-        st.image(logo_file, width=200)
+        import base64
+        from pathlib import Path
+        
+        # Encode both logos as base64 for embedding
+        logo_dark_path = Path(__file__).parent / "logo_dark.png"
+        logo_light_path = Path(__file__).parent / "logo_light.png"
+        
+        if logo_dark_path.exists() and logo_light_path.exists():
+            with open(logo_dark_path, "rb") as f:
+                logo_dark_b64 = base64.b64encode(f.read()).decode()
+            with open(logo_light_path, "rb") as f:
+                logo_light_b64 = base64.b64encode(f.read()).decode()
+            
+            # CSS media query detects user's system theme preference
+            st.markdown(f"""
+            <style>
+                .logo-container img.dark-logo {{ display: block; }}
+                .logo-container img.light-logo {{ display: none; }}
+                @media (prefers-color-scheme: light) {{
+                    .logo-container img.dark-logo {{ display: none; }}
+                    .logo-container img.light-logo {{ display: block; }}
+                }}
+            </style>
+            <div class="logo-container">
+                <img class="dark-logo" src="data:image/png;base64,{logo_dark_b64}" width="200" alt="Algo Exchange">
+                <img class="light-logo" src="data:image/png;base64,{logo_light_b64}" width="200" alt="Algo Exchange">
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            # Fallback to just dark logo if files not found
+            st.image("logo_dark.png", width=200)
     with col_title:
         st.title("Prop Firm Rule Comparison Tool")
         st.markdown("*Upload your backtest results to see how they compare against various prop firm rule sets — for educational purposes only*")
