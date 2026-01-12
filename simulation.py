@@ -776,7 +776,7 @@ class PayoutSimulationResult:
     final_account_balance: float
     peak_balance: float
     cushion_at_blow: float  # How much buffer was left when blown
-    payout_history: List[Dict]  # List of {day, amount, balance_after, cushion_after}
+    payout_history: List[Dict]  # List of {day, amount, balance_after, cushion_to_trailing, trailing_threshold, etc}
     equity_curve: List[float]  # For visualization
 
 
@@ -910,8 +910,14 @@ def simulate_funded_account_with_payouts(
     blow_reason = ""
     cushion_at_blow = 0
     
-    # Track profits for consistency rule
+    # Track profits for consistency rule AND profit goals
     profits_since_last_payout = []
+    funded_start_balance = funded_balance  # Track where we started in funded phase
+    profit_since_last_payout = 0.0  # NEW: Track cumulative profit for payout goals
+    
+    # Get payout profit goals (if any)
+    first_payout_profit_goal = payout_rules.get('first_payout_profit_goal', 0) or 0
+    subsequent_payout_profit_goal = payout_rules.get('subsequent_payout_profit_goal', 0) or 0
     
     for day_idx, daily_pnl in enumerate(remaining_pnls):
         actual_day = funded_start_day + day_idx + 1
@@ -928,6 +934,7 @@ def simulate_funded_account_with_payouts(
         funded_balance += daily_pnl
         equity_curve.append(funded_balance)
         profits_since_last_payout.append(daily_pnl)
+        profit_since_last_payout += daily_pnl  # Track cumulative profit for goals
         
         # Track profitable days
         if daily_pnl >= min_profit_per_day:
@@ -967,11 +974,18 @@ def simulate_funded_account_with_payouts(
             blow_reason = f"Account balance (${funded_balance:,.0f}) dropped below minimum required balance (${min_balance:,}). You need to maintain at least ${min_balance_buffer:,} buffer above starting balance."
             break
         
-        # Check payout eligibility
+        # Determine required profit goal for this payout
+        if total_payouts == 0:
+            required_profit_goal = first_payout_profit_goal
+        else:
+            required_profit_goal = subsequent_payout_profit_goal
+        
+        # Check payout eligibility - NOW INCLUDING PROFIT GOALS
         can_payout = (
             profitable_days_count >= min_profitable_days and
             days_since_last_payout >= days_between_payouts and
-            funded_balance > min_balance
+            funded_balance > min_balance and
+            profit_since_last_payout >= required_profit_goal  # NEW: Must hit profit goal!
         )
         
         # Check consistency rule for payout
@@ -1003,8 +1017,11 @@ def simulate_funded_account_with_payouts(
             # Apply user's withdrawal percentage preference
             payout_amount = max_payout * (withdrawal_percent / 100)
             
-            # Calculate cushion after this payout
-            cushion_after = funded_balance - payout_amount - min_balance
+            # Calculate the REAL cushion - distance to trailing threshold (the actual danger!)
+            balance_after = funded_balance - payout_amount
+            trailing_threshold = high_water_mark - current_mll  # This is where you blow
+            cushion_to_trailing = balance_after - trailing_threshold  # Real danger zone
+            cushion_to_floor = balance_after - min_balance  # Distance to static floor
             
             if payout_amount >= 100:  # Minimum payout threshold
                 # Calculate profit split
@@ -1026,7 +1043,11 @@ def simulate_funded_account_with_payouts(
                     'amount': payout_amount,
                     'kept': kept,
                     'balance_after': funded_balance,
-                    'cushion_after': cushion_after,
+                    'trailing_threshold': trailing_threshold,  # Where you blow
+                    'cushion_to_trailing': cushion_to_trailing,  # Real danger zone!
+                    'cushion_to_floor': cushion_to_floor,  # Distance to static min
+                    'high_water_mark': high_water_mark,  # For reference
+                    'max_available': max_payout,  # Maximum that could have been withdrawn
                     'available_not_taken': max_payout - payout_amount  # How much they left in
                 })
                 
@@ -1037,6 +1058,7 @@ def simulate_funded_account_with_payouts(
                 profitable_days_count = 0
                 days_since_last_payout = 0
                 profits_since_last_payout = []
+                profit_since_last_payout = 0.0  # Reset cumulative profit for next goal
                 
                 # Handle MLL reset (Topstep)
                 if mll_resets_on_payout:
