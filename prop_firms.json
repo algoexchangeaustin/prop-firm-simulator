@@ -29,8 +29,15 @@
         "profit_split_after": 90,
         "safety_net_first_3": true,
         "notes": "Safety net = $2,600 (DD + $100) for first 3 payouts. After 3rd: no safety net. First payout: 10 days. Caps first 5 payouts, then unlimited.",
-        "safety_net_first_3_only": true
-      }
+        "safety_net_first_3_only": true,
+        "funded_consistency_percent": 30,
+        "eval_consistency_percent": null,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 130,
+      "activation_fee_type": "lifetime_or_monthly",
+      "monthly_pa_fee": 85
     },
     "apex_trader_funding_100k": {
       "display_name": "Apex Trader Funding - 100K Eval",
@@ -61,8 +68,15 @@
         "profit_split_after": 90,
         "safety_net_first_3": true,
         "notes": "Safety net = $3,100 (DD + $100) for first 3 payouts. After 3rd: no safety net. First payout: 10 days. Caps first 5 payouts, then unlimited.",
-        "safety_net_first_3_only": true
-      }
+        "safety_net_first_3_only": true,
+        "funded_consistency_percent": 30,
+        "eval_consistency_percent": null,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 170,
+      "activation_fee_type": "lifetime_or_monthly",
+      "monthly_pa_fee": 85
     },
     "apex_trader_funding_150k": {
       "display_name": "Apex Trader Funding - 150K Eval",
@@ -93,8 +107,15 @@
         "profit_split_after": 90,
         "safety_net_first_3": true,
         "notes": "Safety net = $5,100 (DD + $100) for first 3 payouts. After 3rd: no safety net. First payout: 10 days. Caps first 5 payouts, then unlimited.",
-        "safety_net_first_3_only": true
-      }
+        "safety_net_first_3_only": true,
+        "funded_consistency_percent": 30,
+        "eval_consistency_percent": null,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 220,
+      "activation_fee_type": "lifetime_or_monthly",
+      "monthly_pa_fee": 85
     },
     "topstep_50k": {
       "display_name": "Topstep - 50K Trading Combine",
@@ -123,8 +144,11 @@
         "profit_split_first": 10000,
         "profit_split_after": 90,
         "max_payouts_before_live": 5,
-        "notes": "\u26a0\ufe0f CRITICAL: MLL resets to $0 after first payout! Account cannot go below $0. Max payout = LESSER of 50% OR $5,000. 5 winning days of $150+ required."
-      }
+        "notes": "\u26a0\ufe0f CRITICAL: MLL resets to $0 after first payout! Account cannot go below starting balance. Max payout = LESSER of 50% OR $5,000. 5 winning days of $150+ required per payout. After 5 payouts \u2192 Live Funded Account. Scaling plan applies in funded. $129 activation fee (Standard path) or $0 with higher monthly eval fee.",
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0.01
+      },
+      "activation_fee": 129
     },
     "topstep_100k": {
       "display_name": "Topstep - 100K Trading Combine",
@@ -153,8 +177,11 @@
         "profit_split_first": 10000,
         "profit_split_after": 90,
         "max_payouts_before_live": 5,
-        "notes": "\u26a0\ufe0f CRITICAL: MLL resets to $0 after first payout! Account cannot go below $0. Max payout = LESSER of 50% OR $5,000. 5 winning days of $150+ required."
-      }
+        "notes": "\u26a0\ufe0f CRITICAL: MLL resets to $0 after first payout! Account cannot go below starting balance. Max payout = LESSER of 50% OR $5,000. 5 winning days of $150+ required per payout. After 5 payouts \u2192 Live Funded Account. Scaling plan applies in funded. $129 activation fee (Standard path) or $0 with higher monthly eval fee.",
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0.01
+      },
+      "activation_fee": 129
     },
     "topstep_150k": {
       "display_name": "Topstep - 150K Trading Combine",
@@ -183,8 +210,11 @@
         "profit_split_first": 10000,
         "profit_split_after": 90,
         "max_payouts_before_live": 5,
-        "notes": "\u26a0\ufe0f CRITICAL: MLL resets to $0 after first payout! Account cannot go below $0. Max payout = LESSER of 50% OR $5,000. 5 winning days of $150+ required."
-      }
+        "notes": "\u26a0\ufe0f CRITICAL: MLL resets to $0 after first payout! Account cannot go below starting balance. Max payout = LESSER of 50% OR $5,000. 5 winning days of $150+ required per payout. After 5 payouts \u2192 Live Funded Account. Scaling plan applies in funded. $129 activation fee (Standard path) or $0 with higher monthly eval fee.",
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0.01
+      },
+      "activation_fee": 129
     },
     "tradeify_select_50k": {
       "display_name": "Tradeify - 50K Select Eval",
@@ -214,8 +244,13 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 15000,
         "profit_split_after": 90,
-        "notes": "Select Daily: $2,100 buffer. Select Flex: NO buffer. MLL locks at starting + $100. 40% consistency in eval only."
-      }
+        "notes": "No activation fee. 40% consistency in EVAL only - removed when funded! NO daily loss limit in eval. Choose payout policy (Flex or Daily) when passing.",
+        "funded_consistency_percent": null,
+        "eval_consistency_percent": 40,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "tradeify_select_100k": {
       "display_name": "Tradeify - 100K Select Eval",
@@ -245,8 +280,13 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 15000,
         "profit_split_after": 90,
-        "notes": "Select Daily: $2,600 buffer. Select Flex: NO buffer. MLL locks at starting + $100. 40% consistency in eval only."
-      }
+        "notes": "No activation fee. 40% consistency in EVAL only - removed when funded! NO daily loss limit in eval. Choose payout policy (Flex or Daily) when passing.",
+        "funded_consistency_percent": null,
+        "eval_consistency_percent": 40,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "tradeify_select_150k": {
       "display_name": "Tradeify - 150K Select Eval",
@@ -276,8 +316,13 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 15000,
         "profit_split_after": 90,
-        "notes": "Select Daily: $3,600 buffer. Select Flex: NO buffer. MLL locks at starting + $100. 40% consistency in eval only."
-      }
+        "notes": "No activation fee. 40% consistency in EVAL only - removed when funded! NO daily loss limit in eval. Choose payout policy (Flex or Daily) when passing.",
+        "funded_consistency_percent": null,
+        "eval_consistency_percent": 40,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "tradeify_growth_50k": {
       "display_name": "Tradeify - 50K Growth Eval",
@@ -306,9 +351,14 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 15000,
         "profit_split_after": 90,
-        "notes": "Growth: NO buffer. MLL locks at starting + $100. 35% consistency. 5 profitable days. 10 days between payouts.",
-        "mll_locks_at_start_plus_100": true
-      }
+        "notes": "No activation fee. Can pass eval in 1 day. 35% consistency rule applies ONLY in funded (not eval). 5 funded accounts max. Path to Elite Live after 5 payouts.",
+        "mll_locks_at_start_plus_100": true,
+        "funded_consistency_percent": 35,
+        "eval_consistency_percent": null,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "tradeify_growth_100k": {
       "display_name": "Tradeify - 100K Growth Eval",
@@ -337,9 +387,14 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 15000,
         "profit_split_after": 90,
-        "notes": "Growth: NO buffer. MLL locks at starting + $100. 35% consistency. 5 profitable days. 10 days between payouts.",
-        "mll_locks_at_start_plus_100": true
-      }
+        "notes": "No activation fee. Can pass eval in 1 day. 35% consistency rule applies ONLY in funded (not eval). 5 funded accounts max. Path to Elite Live after 5 payouts.",
+        "mll_locks_at_start_plus_100": true,
+        "funded_consistency_percent": 35,
+        "eval_consistency_percent": null,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "tradeify_growth_150k": {
       "display_name": "Tradeify - 150K Growth Eval",
@@ -368,16 +423,21 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 15000,
         "profit_split_after": 90,
-        "notes": "Growth: NO buffer. MLL locks at starting + $100. 35% consistency. 5 profitable days. 10 days between payouts.",
-        "mll_locks_at_start_plus_100": true
-      }
+        "notes": "No activation fee. Can pass eval in 1 day. 35% consistency rule applies ONLY in funded (not eval). 5 funded accounts max. Path to Elite Live after 5 payouts.",
+        "mll_locks_at_start_plus_100": true,
+        "funded_consistency_percent": 35,
+        "eval_consistency_percent": null,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "tradeify_lightning_50k": {
       "display_name": "Tradeify - 50K Lightning (Instant)",
       "firm": "Tradeify",
       "account_type": "Instant Funded",
       "account_size": 50000,
-      "profit_target": 3000,
+      "profit_target": 0,
       "max_trailing_drawdown": 2000,
       "trailing_drawdown_type": "end_of_day",
       "daily_loss_limit": 1250,
@@ -400,15 +460,18 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 15000,
         "profit_split_after": 90,
-        "notes": "Lightning: NO buffer. Profit goals between payouts. Consistency scales 20%\u219225%\u219230%. No min trading days."
-      }
+        "notes": "Lightning: NO buffer. Profit goals between payouts. Consistency scales 20%\u219225%\u219230%. No min trading days.",
+        "first_payout_profit_goal": 3000,
+        "subsequent_payout_profit_goal": 1500
+      },
+      "direct_to_funded": true
     },
     "tradeify_lightning_100k": {
       "display_name": "Tradeify - 100K Lightning (Instant)",
       "firm": "Tradeify",
       "account_type": "Instant Funded",
       "account_size": 100000,
-      "profit_target": 6000,
+      "profit_target": 0,
       "max_trailing_drawdown": 3500,
       "trailing_drawdown_type": "end_of_day",
       "daily_loss_limit": 2500,
@@ -431,15 +494,18 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 15000,
         "profit_split_after": 90,
-        "notes": "Lightning: NO buffer. Profit goals between payouts. Consistency scales 20%\u219225%\u219230%. No min trading days."
-      }
+        "notes": "Lightning: NO buffer. Profit goals between payouts. Consistency scales 20%\u219225%\u219230%. No min trading days.",
+        "first_payout_profit_goal": 6000,
+        "subsequent_payout_profit_goal": 3000
+      },
+      "direct_to_funded": true
     },
     "tradeify_lightning_150k": {
       "display_name": "Tradeify - 150K Lightning (Instant)",
       "firm": "Tradeify",
       "account_type": "Instant Funded",
       "account_size": 150000,
-      "profit_target": 9000,
+      "profit_target": 0,
       "max_trailing_drawdown": 5000,
       "trailing_drawdown_type": "end_of_day",
       "daily_loss_limit": 3750,
@@ -462,8 +528,11 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 15000,
         "profit_split_after": 90,
-        "notes": "Lightning: NO buffer. Profit goals between payouts. Consistency scales 20%\u219225%\u219230%. No min trading days."
-      }
+        "notes": "Lightning: NO buffer. Profit goals between payouts. Consistency scales 20%\u219225%\u219230%. No min trading days.",
+        "first_payout_profit_goal": 9000,
+        "subsequent_payout_profit_goal": 4500
+      },
+      "direct_to_funded": true
     },
     "lucid_flex_50k": {
       "display_name": "Lucid Trading - 50K LucidFlex Eval",
@@ -491,8 +560,13 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 0,
         "profit_split_after": 90,
-        "notes": "LucidFlex: NO buffer! NO consistency once funded! 90/10 split. Up to 6 payouts before Live. $5K move-to-live cap."
-      }
+        "notes": "50% consistency in EVAL only. NO consistency, NO buffer, NO daily loss limit in funded! Most flexible funded account. 90/10 profit split. Path to LucidLive after 6 payouts.",
+        "funded_consistency_percent": null,
+        "eval_consistency_percent": 50,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "lucid_flex_100k": {
       "display_name": "Lucid Trading - 100K LucidFlex Eval",
@@ -520,8 +594,13 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 0,
         "profit_split_after": 90,
-        "notes": "LucidFlex: NO buffer! NO consistency once funded! 90/10 split. Up to 6 payouts before Live. $5K move-to-live cap."
-      }
+        "notes": "50% consistency in EVAL only. NO consistency, NO buffer, NO daily loss limit in funded! Most flexible funded account. 90/10 profit split. Path to LucidLive after 6 payouts.",
+        "funded_consistency_percent": null,
+        "eval_consistency_percent": 50,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "lucid_flex_150k": {
       "display_name": "Lucid Trading - 150K LucidFlex Eval",
@@ -549,8 +628,13 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 0,
         "profit_split_after": 90,
-        "notes": "LucidFlex: NO buffer! NO consistency once funded! 90/10 split. Up to 6 payouts before Live. $5K move-to-live cap."
-      }
+        "notes": "50% consistency in EVAL only. NO consistency, NO buffer, NO daily loss limit in funded! Most flexible funded account. 90/10 profit split. Path to LucidLive after 6 payouts.",
+        "funded_consistency_percent": null,
+        "eval_consistency_percent": 50,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "lucid_pro_50k": {
       "display_name": "Lucid Trading - 50K LucidPro Eval",
@@ -578,8 +662,13 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 0,
         "profit_split_after": 90,
-        "notes": "LucidPro: $2,100 buffer. 40% consistency. Nov 2025: 90/10 split for ALL (no 100% first $10K for new accounts)."
-      }
+        "notes": "LucidPro: $2,100 buffer. 40% consistency. Nov 2025: 90/10 split for ALL (no 100% first $10K for new accounts).",
+        "funded_consistency_percent": 40,
+        "eval_consistency_percent": 40,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "lucid_pro_100k": {
       "display_name": "Lucid Trading - 100K LucidPro Eval",
@@ -607,8 +696,13 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 0,
         "profit_split_after": 90,
-        "notes": "LucidPro: $3,100 buffer. 40% consistency. Nov 2025: 90/10 split for ALL (no 100% first $10K for new accounts)."
-      }
+        "notes": "LucidPro: $3,100 buffer. 40% consistency. Nov 2025: 90/10 split for ALL (no 100% first $10K for new accounts).",
+        "funded_consistency_percent": 40,
+        "eval_consistency_percent": 40,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "lucid_pro_150k": {
       "display_name": "Lucid Trading - 150K LucidPro Eval",
@@ -636,15 +730,20 @@
         "buffer_resets_on_payout": false,
         "profit_split_first": 0,
         "profit_split_after": 90,
-        "notes": "LucidPro: $4,600 buffer. 40% consistency. Nov 2025: 90/10 split for ALL (no 100% first $10K for new accounts)."
-      }
+        "notes": "LucidPro: $4,600 buffer. 40% consistency. Nov 2025: 90/10 split for ALL (no 100% first $10K for new accounts).",
+        "funded_consistency_percent": 40,
+        "eval_consistency_percent": 40,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "lucid_direct_50k": {
       "display_name": "Lucid Trading - 50K LucidDirect (Instant)",
       "firm": "Lucid Trading",
       "account_type": "Instant Funded",
       "account_size": 50000,
-      "profit_target": 3000,
+      "profit_target": 0,
       "max_trailing_drawdown": 2000,
       "trailing_drawdown_type": "end_of_day",
       "daily_loss_limit": 1200,
@@ -653,27 +752,30 @@
       "consistency_max_day_percent": 20,
       "notes": "Instant funded - skip evaluation. EOD trailing (4%). 20% consistency rule for payouts.",
       "payout_rules": {
-        "min_profitable_days": 5,
+        "min_profitable_days": 8,
         "min_profit_per_day": 100,
         "days_between_payouts": 5,
         "consistency_percent": 20,
         "first_payout_cap": null,
         "subsequent_payout_cap": null,
         "max_payout_percent": null,
-        "min_balance_buffer": 2100,
+        "min_balance_buffer": 0,
         "mll_resets_on_payout": false,
         "buffer_resets_on_payout": false,
         "profit_split_first": 0,
         "profit_split_after": 90,
-        "notes": "LucidDirect: $2,100 buffer. 8 trading days for first payout. 90/10 split."
-      }
+        "notes": "LucidDirect: $2,100 buffer. 8 trading days for first payout. 90/10 split.",
+        "first_payout_profit_goal": 3000,
+        "subsequent_payout_profit_goal": 2500
+      },
+      "direct_to_funded": true
     },
     "lucid_direct_100k": {
       "display_name": "Lucid Trading - 100K LucidDirect (Instant)",
       "firm": "Lucid Trading",
       "account_type": "Instant Funded",
       "account_size": 100000,
-      "profit_target": 6000,
+      "profit_target": 0,
       "max_trailing_drawdown": 4000,
       "trailing_drawdown_type": "end_of_day",
       "daily_loss_limit": 1800,
@@ -682,27 +784,30 @@
       "consistency_max_day_percent": 20,
       "notes": "Instant funded - skip evaluation. EOD trailing (4%). 20% consistency rule for payouts.",
       "payout_rules": {
-        "min_profitable_days": 5,
+        "min_profitable_days": 8,
         "min_profit_per_day": 150,
         "days_between_payouts": 5,
         "consistency_percent": 20,
         "first_payout_cap": null,
         "subsequent_payout_cap": null,
         "max_payout_percent": null,
-        "min_balance_buffer": 3100,
+        "min_balance_buffer": 0,
         "mll_resets_on_payout": false,
         "buffer_resets_on_payout": false,
         "profit_split_first": 0,
         "profit_split_after": 90,
-        "notes": "LucidDirect: $3,100 buffer. 8 trading days for first payout. 90/10 split."
-      }
+        "notes": "LucidDirect: $3,100 buffer. 8 trading days for first payout. 90/10 split.",
+        "first_payout_profit_goal": 6000,
+        "subsequent_payout_profit_goal": 3500
+      },
+      "direct_to_funded": true
     },
     "lucid_direct_150k": {
       "display_name": "Lucid Trading - 150K LucidDirect (Instant)",
       "firm": "Lucid Trading",
       "account_type": "Instant Funded",
       "account_size": 150000,
-      "profit_target": 9000,
+      "profit_target": 0,
       "max_trailing_drawdown": 6000,
       "trailing_drawdown_type": "end_of_day",
       "daily_loss_limit": 2700,
@@ -711,20 +816,23 @@
       "consistency_max_day_percent": 20,
       "notes": "Instant funded - skip evaluation. EOD trailing (4%). 20% consistency rule for payouts.",
       "payout_rules": {
-        "min_profitable_days": 5,
+        "min_profitable_days": 8,
         "min_profit_per_day": 200,
         "days_between_payouts": 5,
         "consistency_percent": 20,
         "first_payout_cap": null,
         "subsequent_payout_cap": null,
         "max_payout_percent": null,
-        "min_balance_buffer": 4600,
+        "min_balance_buffer": 0,
         "mll_resets_on_payout": false,
         "buffer_resets_on_payout": false,
         "profit_split_first": 0,
         "profit_split_after": 90,
-        "notes": "LucidDirect: $4,600 buffer. 8 trading days for first payout. 90/10 split."
-      }
+        "notes": "LucidDirect: $4,600 buffer. 8 trading days for first payout. 90/10 split.",
+        "first_payout_profit_goal": 9000,
+        "subsequent_payout_profit_goal": 4500
+      },
+      "direct_to_funded": true
     },
     "tradeday_50k": {
       "display_name": "TradeDay - 50K EOD",
@@ -751,7 +859,9 @@
         "mll_resets_on_payout": false,
         "profit_split_first": 10000,
         "profit_split_after": 90,
-        "notes": "30% consistency rule. MLL locks at starting balance + $100."
+        "notes": "30% consistency rule. MLL locks at starting balance + $100.",
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
       }
     },
     "tradeday_100k": {
@@ -779,7 +889,9 @@
         "mll_resets_on_payout": false,
         "profit_split_first": 10000,
         "profit_split_after": 90,
-        "notes": "30% consistency rule. MLL locks at starting balance + $100."
+        "notes": "30% consistency rule. MLL locks at starting balance + $100.",
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
       }
     },
     "mff_50k": {
@@ -809,8 +921,13 @@
         "profit_split_first": 10000,
         "profit_split_after": 90,
         "max_payouts_before_live": 5,
-        "notes": "Starter/Core: NO buffer. MLL \u2192 starting + $100 after payout. 40% consistency, 5 winning days of $100+."
-      }
+        "notes": "Starter/Core: NO buffer. MLL \u2192 starting + $100 after payout. 40% consistency, 5 winning days of $100+.",
+        "funded_consistency_percent": 40,
+        "eval_consistency_percent": null,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "mff_100k": {
       "display_name": "My Funded Futures - 100K",
@@ -839,8 +956,13 @@
         "profit_split_first": 10000,
         "profit_split_after": 90,
         "max_payouts_before_live": 5,
-        "notes": "Starter/Core: NO buffer. MLL \u2192 starting + $100 after payout. 40% consistency, 5 winning days of $200+."
-      }
+        "notes": "Starter/Core: NO buffer. MLL \u2192 starting + $100 after payout. 40% consistency, 5 winning days of $200+.",
+        "funded_consistency_percent": 40,
+        "eval_consistency_percent": null,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 0
     },
     "bulenox_50k": {
       "display_name": "Bulenox - 50K EOD",
@@ -870,8 +992,11 @@
         "profit_split_first": 10000,
         "profit_split_after": 90,
         "payout_day": "wednesday",
-        "notes": "Safety threshold: $2,600. 40% consistency. 10 trading days. First 3 payouts capped, then UNLIMITED. Wednesdays only."
-      }
+        "notes": "$148 one-time activation fee. 40% consistency rule. Safety threshold buffer. First 3 payouts capped, then unlimited. 100% of first $10K, then 90%. Payouts processed Wednesdays.",
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "activation_fee": 148
     },
     "bulenox_150k": {
       "firm": "Bulenox",
@@ -898,9 +1023,13 @@
         "profit_split_first": 10000,
         "profit_split_after": 90,
         "payout_day": "wednesday",
-        "notes": "Safety threshold: $4,600. 40% consistency. 10 trading days. First 3 payouts capped, then UNLIMITED. Wednesdays only."
+        "notes": "$498 one-time activation fee. 40% consistency rule. Safety threshold buffer. First 3 payouts capped, then unlimited. 100% of first $10K, then 90%. Payouts processed Wednesdays.",
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
       },
-      "display_name": "Bulenox - 150K EOD"
+      "display_name": "Bulenox - 150K EOD",
+      "activation_fee": 498,
+      "account_type": "Evaluation"
     },
     "mff_150k": {
       "firm": "My Funded Futures",
@@ -925,9 +1054,15 @@
         "profit_split_first": 10000,
         "profit_split_after": 90,
         "max_payouts_before_live": 5,
-        "notes": "Pro plan: $4,600 buffer. Can withdraw 60% before clearing buffer. No consistency. Every 14 days."
+        "notes": "Pro plan: $4,600 buffer. Can withdraw 60% before clearing buffer. No consistency. Every 14 days.",
+        "funded_consistency_percent": 40,
+        "eval_consistency_percent": null,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
       },
-      "display_name": "My Funded Futures - 150K"
+      "display_name": "My Funded Futures - 150K",
+      "activation_fee": 0,
+      "account_type": "Evaluation"
     },
     "tpt_50k": {
       "display_name": "Take Profit Trader - 50K",
@@ -944,7 +1079,7 @@
         "min_profitable_days": 5,
         "min_profit_per_day": 0,
         "days_between_payouts": 0,
-        "consistency_percent": 50,
+        "consistency_percent": null,
         "consistency_in_funded": false,
         "min_balance_buffer": 2000,
         "first_payout_cap": null,
@@ -953,8 +1088,15 @@
         "profit_split_after": 80,
         "pro_plus_split": 90,
         "pro_plus_buffer": 0,
-        "notes": "PRO: Buffer = $2,000 (equals max DD), 80/20 split, intraday trailing DD. PRO+: NO buffer, 90/10 split, EOD trailing. Daily payouts, no caps. $130 activation."
-      }
+        "notes": "50% consistency rule in TEST only - NOT in funded PRO. Buffer = max drawdown. Daily payouts, no caps, no waiting. PRO+ available after $10K profit: 90/10 split, NO buffer, EOD drawdown.",
+        "funded_consistency_percent": null,
+        "eval_consistency_percent": 50,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "consistency_rule": true,
+      "consistency_max_day_percent": 50,
+      "account_type": "Evaluation"
     },
     "tpt_100k": {
       "display_name": "Take Profit Trader - 100K",
@@ -971,7 +1113,7 @@
         "min_profitable_days": 5,
         "min_profit_per_day": 0,
         "days_between_payouts": 0,
-        "consistency_percent": 50,
+        "consistency_percent": null,
         "consistency_in_funded": false,
         "min_balance_buffer": 3000,
         "first_payout_cap": null,
@@ -980,8 +1122,15 @@
         "profit_split_after": 80,
         "pro_plus_split": 90,
         "pro_plus_buffer": 0,
-        "notes": "PRO: Buffer = $3,000 (equals max DD), 80/20 split, intraday trailing DD. PRO+: NO buffer, 90/10 split, EOD trailing. Daily payouts, no caps. $130 activation."
-      }
+        "notes": "50% consistency rule in TEST only - NOT in funded PRO. Buffer = max drawdown. Daily payouts, no caps, no waiting. PRO+ available after $10K profit: 90/10 split, NO buffer, EOD drawdown.",
+        "funded_consistency_percent": null,
+        "eval_consistency_percent": 50,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "consistency_rule": true,
+      "consistency_max_day_percent": 50,
+      "account_type": "Evaluation"
     },
     "tpt_150k": {
       "display_name": "Take Profit Trader - 150K",
@@ -998,7 +1147,7 @@
         "min_profitable_days": 5,
         "min_profit_per_day": 0,
         "days_between_payouts": 0,
-        "consistency_percent": 50,
+        "consistency_percent": null,
         "consistency_in_funded": false,
         "min_balance_buffer": 5000,
         "first_payout_cap": null,
@@ -1007,7 +1156,48 @@
         "profit_split_after": 80,
         "pro_plus_split": 90,
         "pro_plus_buffer": 0,
-        "notes": "PRO: Buffer = $5,000 (equals max DD), 80/20 split, intraday trailing DD. PRO+: NO buffer, 90/10 split, EOD trailing. Daily payouts, no caps. $130 activation."
+        "notes": "50% consistency rule in TEST only - NOT in funded PRO. Buffer = max drawdown. Daily payouts, no caps, no waiting. PRO+ available after $10K profit: 90/10 split, NO buffer, EOD drawdown.",
+        "funded_consistency_percent": null,
+        "eval_consistency_percent": 50,
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
+      },
+      "consistency_rule": true,
+      "consistency_max_day_percent": 50,
+      "account_type": "Evaluation"
+    },
+    "bulenox_100k": {
+      "display_name": "Bulenox - 100K EOD",
+      "firm": "Bulenox",
+      "account_type": "Evaluation",
+      "account_size": 100000,
+      "profit_target": 6000,
+      "max_trailing_drawdown": 3000,
+      "trailing_drawdown_type": "end_of_day",
+      "daily_loss_limit": null,
+      "min_trading_days": 5,
+      "consistency_rule": true,
+      "consistency_max_day_percent": 40,
+      "activation_fee": 248,
+      "notes": "EOD trailing drawdown. 40% consistency rule. Activation fee $248.",
+      "payout_rules": {
+        "min_profitable_days": 10,
+        "min_profit_per_day": 0,
+        "days_between_payouts": 7,
+        "consistency_percent": 40,
+        "funded_consistency_percent": 40,
+        "eval_consistency_percent": 40,
+        "first_payout_cap": 1750,
+        "subsequent_payout_cap": null,
+        "max_payout_percent": null,
+        "min_balance_buffer": 3100,
+        "mll_resets_on_payout": false,
+        "buffer_resets_on_payout": false,
+        "profit_split_first": 10000,
+        "profit_split_after": 90,
+        "notes": "$248 one-time activation fee. 40% consistency rule. Safety threshold $3,100 buffer. First 3 payouts capped at $1,750, then unlimited. 100% of first $10K, then 90%. Payouts processed Wednesdays.",
+        "first_payout_profit_goal": 0,
+        "subsequent_payout_profit_goal": 0
       }
     }
   }
