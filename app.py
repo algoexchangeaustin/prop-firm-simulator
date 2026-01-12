@@ -910,6 +910,7 @@ def main():
             
             # Withdrawal strategy slider
             st.markdown("#### 🎚️ Withdrawal Strategy Simulation")
+            st.caption("⚠️ **Disclosure:** These are examples, not guarantees. NO REPRESENTATION IS BEING MADE that any account will or is likely to achieve profits or losses similar to those shown. In fact, there are frequently sharp differences between hypothetical performance results and actual results subsequently achieved. Trading is risky.")
             withdrawal_pct = st.slider(
                 "Simulated withdrawal % of available profits:",
                 min_value=10,
