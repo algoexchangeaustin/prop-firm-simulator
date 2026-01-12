@@ -391,7 +391,8 @@ def main():
                         # Activation fee
                         activation_fee = selected_rules.get('activation_fee', 0)
                         if activation_fee > 0:
-                            st.warning(f"💰 **Activation Fee:** ${activation_fee:,} (one-time)", help=TOOLTIPS.get('activation_fee', ''))
+                            st.warning(f"💰 **Activation Fee:** ${activation_fee:,} (one-time)")
+                            st.caption(TOOLTIPS.get('activation_fee', ''))
                         else:
                             st.success("✅ **No Activation Fee** - Free to activate!")
                         
