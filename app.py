@@ -761,13 +761,20 @@ def main():
                     else:
                         st.markdown("**Payout Consistency:** None")
                 with pr_col2:
-                    st.markdown(f"**First Payout Cap:** ${payout_rules.get('first_payout_cap', 0):,}")
-                    st.markdown(f"**Subsequent Cap:** ${payout_rules.get('subsequent_payout_cap', 0):,}")
+                    first_cap = payout_rules.get('first_payout_cap')
+                    sub_cap = payout_rules.get('subsequent_payout_cap')
+                    st.markdown(f"**First Payout Cap:** {'Unlimited' if first_cap is None else f'${first_cap:,}'}")
+                    st.markdown(f"**Subsequent Cap:** {'Unlimited' if sub_cap is None else f'${sub_cap:,}'}")
                     if payout_rules.get('max_payout_percent'):
                         st.markdown(f"**Max % Per Payout:** {payout_rules['max_payout_percent']}%")
                     if payout_rules.get('mll_resets_on_payout'):
                         st.warning("⚠️ **MLL resets to $0 after first payout!**")
-                    st.markdown(f"**Profit Split:** 100% first ${payout_rules.get('profit_split_first', 10000):,}, then {payout_rules.get('profit_split_after', 90)}%")
+                    split_first = payout_rules.get('profit_split_first', 10000) or 0
+                    split_after = payout_rules.get('profit_split_after', 90)
+                    if split_first == 0:
+                        st.markdown(f"**Profit Split:** 90/10 from start")
+                    else:
+                        st.markdown(f"**Profit Split:** 100% first ${split_first:,}, then {split_after}%")
                 
                 if payout_rules.get('notes'):
                     st.info(payout_rules['notes'])
