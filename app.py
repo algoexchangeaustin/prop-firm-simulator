@@ -217,11 +217,12 @@ def main():
     # Load prop firms
     prop_firms = load_prop_firms()
 
-    # Header with logo (uses CSS to auto-switch based on user's system theme)
+    # Header with logo
     col_logo, col_title = st.columns([1, 4])
     with col_logo:
         import base64
         from pathlib import Path
+        import streamlit.components.v1 as components
         
         # Encode both logos as base64 for embedding
         logo_dark_path = Path(__file__).parent / "logo_dark.png"
@@ -233,23 +234,59 @@ def main():
             with open(logo_light_path, "rb") as f:
                 logo_light_b64 = base64.b64encode(f.read()).decode()
             
-            # CSS media query detects user's system theme preference
-            st.markdown(f"""
-            <style>
-                .logo-container img.dark-logo {{ display: block; }}
-                .logo-container img.light-logo {{ display: none; }}
-                @media (prefers-color-scheme: light) {{
-                    .logo-container img.dark-logo {{ display: none; }}
-                    .logo-container img.light-logo {{ display: block; }}
-                }}
-            </style>
-            <div class="logo-container">
-                <img class="dark-logo" src="data:image/png;base64,{logo_dark_b64}" width="200" alt="Algo Exchange">
-                <img class="light-logo" src="data:image/png;base64,{logo_light_b64}" width="200" alt="Algo Exchange">
+            # Use components.html for proper JS access to detect theme
+            logo_html = f"""
+            <div id="logo-wrapper">
+                <img id="logo-dark" src="data:image/png;base64,{logo_dark_b64}" width="200" alt="Algo Exchange" style="display: none;">
+                <img id="logo-light" src="data:image/png;base64,{logo_light_b64}" width="200" alt="Algo Exchange" style="display: none;">
             </div>
-            """, unsafe_allow_html=True)
+            <script>
+                function detectThemeAndShowLogo() {{
+                    const darkLogo = document.getElementById('logo-dark');
+                    const lightLogo = document.getElementById('logo-light');
+                    
+                    // Try to get background color from Streamlit's main container
+                    let isDark = true;  // default to dark
+                    
+                    try {{
+                        // Check parent document for Streamlit theme
+                        const stApp = window.parent.document.querySelector('.stApp');
+                        if (stApp) {{
+                            const bgColor = window.parent.getComputedStyle(stApp).backgroundColor;
+                            const rgb = bgColor.match(/\\d+/g);
+                            if (rgb) {{
+                                const brightness = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
+                                isDark = brightness < 128;
+                            }}
+                        }}
+                    }} catch (e) {{
+                        // If can't access parent, check prefers-color-scheme
+                        isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    }}
+                    
+                    if (isDark) {{
+                        darkLogo.style.display = 'block';
+                        lightLogo.style.display = 'none';
+                    }} else {{
+                        darkLogo.style.display = 'none';
+                        lightLogo.style.display = 'block';
+                    }}
+                }}
+                
+                // Run detection
+                detectThemeAndShowLogo();
+                setTimeout(detectThemeAndShowLogo, 100);
+                setTimeout(detectThemeAndShowLogo, 300);
+                setTimeout(detectThemeAndShowLogo, 1000);
+                
+                // Listen for theme changes
+                if (window.matchMedia) {{
+                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', detectThemeAndShowLogo);
+                }}
+            </script>
+            """
+            components.html(logo_html, height=60)
         else:
-            # Fallback to just dark logo if files not found
             st.image("logo_dark.png", width=200)
     with col_title:
         st.title("Prop Firm Rule Comparison Tool")
