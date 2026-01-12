@@ -421,8 +421,9 @@ def run_single_simulation(
         # For simulation purposes, we'll just note this
         days_to_target = max(days_to_target, min_days)
     
-    # Check consistency rule
-    if rules.get('consistency_rule') and target_reached and failure_reason is None:
+    # Check consistency rule (skip for direct-to-funded - no eval phase)
+    is_direct_to_funded = rules.get('direct_to_funded', False) or profit_target == 0
+    if rules.get('consistency_rule') and target_reached and failure_reason is None and not is_direct_to_funded:
         max_day_pct = rules.get('consistency_max_day_percent', 50)
         total_profit = sum(p for p in daily_profits if p > 0)
         if total_profit > 0:
@@ -619,8 +620,9 @@ def run_single_simulation_sequential(
     if target_reached and trading_days < min_days:
         days_to_target = max(days_to_target, min_days)
     
-    # Check consistency rule
-    if rules.get('consistency_rule') and target_reached and failure_reason is None:
+    # Check consistency rule (skip for direct-to-funded - no eval phase)
+    is_direct_to_funded = rules.get('direct_to_funded', False) or profit_target == 0
+    if rules.get('consistency_rule') and target_reached and failure_reason is None and not is_direct_to_funded:
         max_day_pct = rules.get('consistency_max_day_percent', 50)
         total_profit = sum(p for p in daily_profits if p > 0)
         if total_profit > 0:
@@ -966,8 +968,9 @@ def simulate_funded_account_with_payouts(
                     blow_reason += f" Note: You had already withdrawn ${total_withdrawn:,.0f} in {total_payouts} payouts, which reduced your cushion."
                 break
         
-        # Check if below minimum balance
-        if funded_balance < min_balance:
+        # Check if below minimum balance (only if there's a buffer requirement)
+        # If min_balance_buffer is 0, we rely solely on the trailing drawdown check
+        if min_balance_buffer > 0 and funded_balance < min_balance:
             account_blown = True
             blown_on_day = actual_day
             cushion_at_blow = funded_balance - min_balance
