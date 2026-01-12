@@ -741,7 +741,14 @@ def main():
         # Quick Comparison Section
         st.divider()
         st.subheader("🔄 Quick Compare: Same Account Size")
-        st.caption("See how your backtest performs across different firms with similar account sizes")
+        
+        # Show which mode will be used
+        if sim_mode == "rolling_window":
+            st.caption("Comparing using **Rolling Window** simulation (preserves your actual trade sequence)")
+        elif sim_mode == "actual":
+            st.caption("Comparing using **Actual Sequence** test (your exact track record)")
+        else:
+            st.caption("Comparing using **Monte Carlo** simulation (stress test with shuffled sequences)")
         
         # Find firms with same account size
         account_size = rules['account_size']
@@ -755,20 +762,51 @@ def main():
                 
                 for i, (firm_key, firm_rules) in enumerate(similar_firms.items()):
                     try:
-                        comp_results = run_monte_carlo_simulation(
-                            trades=st.session_state.trades,
-                            rules=firm_rules,
-                            num_simulations=100  # Fewer sims for speed
-                        )
+                        # Use the same simulation mode as selected
+                        if sim_mode == "rolling_window":
+                            comp_results = run_rolling_window_simulation(
+                                trades=st.session_state.trades,
+                                rules=firm_rules,
+                                num_windows=100
+                            )
+                        elif sim_mode == "actual":
+                            actual_result = run_actual_sequence_test(
+                                trades=st.session_state.trades,
+                                rules=firm_rules
+                            )
+                            # Wrap in AggregateResults format
+                            comp_results = AggregateResults(
+                                total_simulations=1,
+                                pass_count=1 if actual_result.passed else 0,
+                                pass_rate=1.0 if actual_result.passed else 0.0,
+                                avg_days_to_target=actual_result.days_to_target,
+                                median_days_to_target=actual_result.days_to_target,
+                                avg_max_drawdown=actual_result.max_drawdown,
+                                failure_reasons={actual_result.failure_reason: 1} if actual_result.failure_reason else {},
+                                equity_curves=[actual_result.equity_curve],
+                                daily_pnls=[actual_result.daily_pnl]
+                            )
+                        else:  # Monte Carlo
+                            comp_results = run_monte_carlo_simulation(
+                                trades=st.session_state.trades,
+                                rules=firm_rules,
+                                num_simulations=100
+                            )
                         
                         # Get primary failure reason
                         primary_fail = "N/A"
                         if comp_results.failure_reasons:
                             primary_fail = max(comp_results.failure_reasons.items(), key=lambda x: x[1])[0]
                         
+                        # Format pass rate based on mode
+                        if sim_mode == "actual":
+                            pass_display = "✅ PASS" if comp_results.pass_rate == 1.0 else "❌ FAIL"
+                        else:
+                            pass_display = f"{comp_results.pass_rate*100:.1f}%"
+                        
                         comparison_results.append({
                             'Firm': firm_rules['display_name'],
-                            'Pass Rate': f"{comp_results.pass_rate*100:.1f}%",
+                            'Pass Rate': pass_display,
                             'Max DD': f"${firm_rules['max_trailing_drawdown']:,}",
                             'DD Type': 'Intraday' if firm_rules.get('trailing_drawdown_type') == 'intraday' else 'EOD',
                             'DLL': f"${firm_rules['daily_loss_limit']:,}" if firm_rules.get('daily_loss_limit') else 'None',
