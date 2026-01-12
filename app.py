@@ -350,6 +350,7 @@ def main():
                 stats = get_trade_statistics(trades)
                 
                 st.markdown("### 📈 Your Backtest Statistics")
+                st.caption("**HYPOTHETICAL PERFORMANCE** — Based on uploaded backtest data")
                 stat_cols = st.columns(4)
                 with stat_cols[0]:
                     st.metric("Total Trades", stats['total_trades'])
@@ -359,6 +360,57 @@ def main():
                     st.metric("Win Rate", f"{stats['win_rate']:.1f}%")
                 with stat_cols[3]:
                     st.metric("Profit Factor", f"{stats['profit_factor']:.2f}" if stats['profit_factor'] != float('inf') else "∞")
+                
+                # Equity curve - cumulative P&L starting from $0
+                cumulative_pnl = []
+                running_total = 0
+                trade_dates = []
+                for t in trades:
+                    running_total += t['pnl']
+                    cumulative_pnl.append(running_total)
+                    trade_dates.append(t['date'])
+                
+                # Create equity curve with color segments
+                fig_equity = go.Figure()
+                
+                # Split into segments based on positive/negative
+                i = 0
+                while i < len(cumulative_pnl):
+                    # Find segment of same sign
+                    start_i = i
+                    is_positive = cumulative_pnl[i] >= 0
+                    
+                    while i < len(cumulative_pnl) and (cumulative_pnl[i] >= 0) == is_positive:
+                        i += 1
+                    
+                    # Include one extra point to connect segments (if not at end)
+                    end_i = min(i + 1, len(cumulative_pnl))
+                    
+                    segment_x = list(range(start_i, end_i))
+                    segment_y = cumulative_pnl[start_i:end_i]
+                    
+                    fig_equity.add_trace(go.Scatter(
+                        x=segment_x,
+                        y=segment_y,
+                        mode='lines',
+                        line=dict(color='green' if is_positive else 'red', width=2),
+                        showlegend=False,
+                        hovertemplate='Trade %{x}<br>Net P&L: $%{y:,.2f}<extra></extra>'
+                    ))
+                
+                # Add zero line
+                fig_equity.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+                
+                fig_equity.update_layout(
+                    title="Cumulative Net P&L (Equity Curve)",
+                    xaxis_title="Trade #",
+                    yaxis_title="Net P&L ($)",
+                    height=300,
+                    margin=dict(l=0, r=0, t=40, b=0),
+                    hovermode='x unified'
+                )
+                
+                st.plotly_chart(fig_equity, use_container_width=True)
                 
                 st.divider()
                 
@@ -1200,6 +1252,18 @@ def main():
         """)
         
         st.caption("*By using this tool, you acknowledge that you have read and understood this disclaimer.*")
+        
+        # CFTC Rule 4.41 Footer
+        st.divider()
+        st.markdown("""
+        <div style="background-color: #1a1a1a; padding: 20px; border-radius: 5px; border: 1px solid #333;">
+        <p style="font-size: 11px; color: #888; text-align: center; margin: 0;">
+        <strong>CFTC RULE 4.41</strong> – HYPOTHETICAL OR SIMULATED PERFORMANCE RESULTS HAVE CERTAIN LIMITATIONS. UNLIKE AN ACTUAL PERFORMANCE RECORD, SIMULATED RESULTS DO NOT REPRESENT ACTUAL TRADING. ALSO, SINCE THE TRADES HAVE NOT BEEN EXECUTED, THE RESULTS MAY HAVE UNDER-OR-OVER COMPENSATED FOR THE IMPACT, IF ANY, OF CERTAIN MARKET FACTORS, SUCH AS LACK OF LIQUIDITY.
+        <br><br>
+        SIMULATED TRADING PROGRAMS IN GENERAL ARE ALSO SUBJECT TO THE FACT THAT THEY ARE DESIGNED WITH THE BENEFIT OF HINDSIGHT. NO REPRESENTATION IS BEING MADE THAT ANY ACCOUNT WILL OR IS LIKELY TO ACHIEVE PROFIT OR LOSSES SIMILAR TO THOSE SHOWN.
+        </p>
+        </div>
+        """, unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
