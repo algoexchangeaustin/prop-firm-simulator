@@ -23,9 +23,19 @@ from simulation import (
     PayoutSimulationResult
 )
 
+# Import tooltips and help text
+try:
+    from tooltips import TOOLTIPS, EVAL_VS_FUNDED_INFO, FIRM_WARNINGS, PAYOUT_COLUMNS
+except ImportError:
+    # Fallback if tooltips.py not found
+    TOOLTIPS = {}
+    EVAL_VS_FUNDED_INFO = ""
+    FIRM_WARNINGS = {}
+    PAYOUT_COLUMNS = {}
+
 # Page config
 st.set_page_config(
-    page_title="Prop Firm Simulator",
+    page_title="Prop Firm Rule Comparison Tool",
     page_icon="📊",
     layout="wide"
 )
@@ -185,8 +195,8 @@ def main():
     prop_firms = load_prop_firms()
 
     # Header
-    st.title("📊 Prop Firm Simulation Chatbot")
-    st.markdown("*Upload your backtest results and simulate your chances of passing prop firm evaluations*")
+    st.title("📊 Prop Firm Rule Comparison Tool")
+    st.markdown("*Upload your backtest results to see how they compare against various prop firm rule sets — for educational purposes only*")
     
     st.divider()
 
@@ -196,9 +206,23 @@ def main():
         st.markdown("""
         1. **Select** your trading platform
         2. **Upload** your backtest CSV file
-        3. **Select** a prop firm to simulate against
-        4. **Run** 200 Monte Carlo simulations
-        5. **Review** your pass probability
+        3. **Select** a prop firm to compare against
+        4. **Run** simulations using your historical data
+        5. **Review** the hypothetical results
+        """)
+        
+        st.divider()
+        
+        # COMPLIANCE: Add prominent disclaimer
+        st.warning("""
+        ⚠️ **Important Notice**
+        
+        This tool provides **hypothetical simulations** based on your uploaded backtest data. Results are for **educational and informational purposes only**.
+        
+        - Past performance does not predict future results
+        - Simulations do not account for slippage, commissions, or market conditions
+        - This is NOT investment advice
+        - We are not registered investment advisors
         """)
         
         st.divider()
@@ -218,9 +242,28 @@ def main():
         
         st.divider()
         
+        # NEW: Eval vs Funded Info Panel
+        with st.expander("🔄 Eval vs Funded Rules", expanded=False):
+            st.markdown("""
+            **Rules often CHANGE when you pass evaluation:**
+            
+            | Firm | Key Change |
+            |------|------------|
+            | **Topstep** | MLL resets to $0! |
+            | **Apex** | 30% consistency ADDED |
+            | **TPT** | 50% consistency REMOVED |
+            | **MFF** | 40% consistency ADDED |
+            | **Tradeify Select** | 40% consistency REMOVED |
+            | **Lucid Flex** | 50% consistency REMOVED |
+            
+            ⚠️ Always check funded rules before passing!
+            """)
+        
+        st.divider()
+        
         st.caption("""
         **Disclaimer:**
-        *This simulation is based on historical backtest data and uses random resampling. Past performance does not guarantee future results. This tool is for educational purposes only.*
+        *This tool provides hypothetical simulations based on historical backtest data using random resampling methods. Results are for educational and informational purposes only. Past performance does not predict future results. Actual trading involves risks not captured in these simulations, including slippage, commissions, market volatility, and execution differences. This tool does not provide investment advice and should not be relied upon for trading decisions. Users are solely responsible for their own trading decisions.*
         """)
 
     # Main chat area
@@ -321,21 +364,70 @@ def main():
                     st.session_state.selected_firm = selected_rules
                     st.session_state.selected_firm_key = selected_firm_id  # Track the key for comparison
                     
-                    # Display selected firm rules
-                    with st.expander("📋 View Selected Firm Rules"):
+                    # Display selected firm rules - EVALUATION PHASE
+                    with st.expander("📋 View Evaluation Rules", expanded=False):
                         rule_cols = st.columns(2)
                         with rule_cols[0]:
-                            st.markdown(f"**Account Size:** ${selected_rules['account_size']:,}")
-                            st.markdown(f"**Profit Target:** ${selected_rules['profit_target']:,}")
-                            st.markdown(f"**Max Trailing Drawdown:** ${selected_rules['max_trailing_drawdown']:,}")
+                            st.markdown(f"**Account Size:** ${selected_rules['account_size']:,}", help=TOOLTIPS.get('account_size', ''))
+                            st.markdown(f"**Profit Target:** ${selected_rules['profit_target']:,}", help=TOOLTIPS.get('profit_target', ''))
+                            st.markdown(f"**Max Trailing Drawdown:** ${selected_rules['max_trailing_drawdown']:,}", help=TOOLTIPS.get('trailing_drawdown', ''))
                         with rule_cols[1]:
-                            st.markdown(f"**Trailing Type:** {selected_rules['trailing_drawdown_type'].replace('_', ' ').title()}")
-                            st.markdown(f"**Min Trading Days:** {selected_rules['min_trading_days']}")
+                            dd_type = selected_rules['trailing_drawdown_type'].replace('_', ' ').title()
+                            dd_help = TOOLTIPS.get('eod_trailing', '') if 'end' in dd_type.lower() else TOOLTIPS.get('intraday_trailing', '')
+                            st.markdown(f"**Trailing Type:** {dd_type}", help=dd_help)
+                            st.markdown(f"**Min Trading Days:** {selected_rules['min_trading_days']}", help=TOOLTIPS.get('min_trading_days', ''))
                             if selected_rules.get('daily_loss_limit'):
-                                st.markdown(f"**Daily Loss Limit:** ${selected_rules['daily_loss_limit']:,}")
+                                st.markdown(f"**Daily Loss Limit:** ${selected_rules['daily_loss_limit']:,}", help=TOOLTIPS.get('daily_loss_limit', ''))
                             if selected_rules.get('consistency_rule'):
-                                st.markdown(f"**Consistency Rule:** Max {selected_rules['consistency_max_day_percent']}% from single day")
-                        st.info(selected_rules.get('notes', ''))
+                                st.markdown(f"**Consistency Rule:** Max {selected_rules['consistency_max_day_percent']}% from single day", help=TOOLTIPS.get('consistency_rule', ''))
+                        if selected_rules.get('notes'):
+                            st.info(selected_rules.get('notes', ''))
+                    
+                    # NEW: Display funded account rules with changes highlighted
+                    payout_rules = selected_rules.get('payout_rules', {})
+                    with st.expander("🏦 View Funded Account Rules (After Passing)", expanded=False):
+                        st.markdown("### What Changes When You Pass Evaluation?")
+                        
+                        # Activation fee
+                        activation_fee = selected_rules.get('activation_fee', 0)
+                        if activation_fee > 0:
+                            st.warning(f"💰 **Activation Fee:** ${activation_fee:,} (one-time)", help=TOOLTIPS.get('activation_fee', ''))
+                        else:
+                            st.success("✅ **No Activation Fee** - Free to activate!")
+                        
+                        # Rule changes comparison
+                        change_cols = st.columns(2)
+                        with change_cols[0]:
+                            st.markdown("**📋 Evaluation Phase:**")
+                            eval_consistency = selected_rules.get('consistency_max_day_percent') if selected_rules.get('consistency_rule') else None
+                            payout_consistency = payout_rules.get('funded_consistency_percent') or payout_rules.get('consistency_percent')
+                            
+                            st.markdown(f"- Consistency: {f'{eval_consistency}%' if eval_consistency else 'None'}")
+                            st.markdown(f"- Buffer Required: None")
+                            st.markdown(f"- MLL: Trails from start")
+                        
+                        with change_cols[1]:
+                            st.markdown("**🏦 Funded Phase:**")
+                            st.markdown(f"- Consistency: {f'{payout_consistency}%' if payout_consistency else '**None**'}")
+                            buffer = payout_rules.get('min_balance_buffer', 0)
+                            st.markdown(f"- Buffer Required: {'**None**' if buffer == 0 else f'${buffer:,}'}")
+                            if payout_rules.get('mll_resets_on_payout'):
+                                st.markdown("- MLL: **⚠️ RESETS TO $0!**", help=TOOLTIPS.get('mll_reset', ''))
+                            else:
+                                st.markdown("- MLL: Continues trailing")
+                        
+                        # Firm-specific warning
+                        firm_key = selected_firm_id.split('_')[0]
+                        if firm_key in FIRM_WARNINGS:
+                            st.info(FIRM_WARNINGS[firm_key])
+                        elif 'topstep' in selected_firm_id:
+                            st.info(FIRM_WARNINGS.get('topstep', ''))
+                        elif 'apex' in selected_firm_id:
+                            st.info(FIRM_WARNINGS.get('apex', ''))
+                        elif 'tpt' in selected_firm_id:
+                            st.info(FIRM_WARNINGS.get('tpt', ''))
+                        elif 'lucid_flex' in selected_firm_id:
+                            st.info(FIRM_WARNINGS.get('lucid_flex', ''))
                     
                     st.divider()
                     
@@ -354,11 +446,11 @@ def main():
                         st.info("""
                         **🎲 Monte Carlo Simulation**
                         
-                        Randomly shuffles your daily P&L to stress-test your strategy. Answers: 
-                        *"If I trade similarly but market conditions create different sequences of wins/losses, what's my probability of passing?"*
+                        Randomly shuffles your daily P&L to stress-test your historical data against different trade sequences. 
+                        Shows: *"How did my historical trades perform when arranged in different random orders?"*
                         
-                        ⚠️ **Note:** Your actual track record might pass, but Monte Carlo tests worst-case scenarios 
-                        where your losing days cluster together.
+                        ⚠️ **Note:** This is a hypothetical analysis tool. Results show how your past data 
+                        performed under simulated conditions, not a prediction of future performance.
                         """)
                         
                         num_sims = st.slider(
@@ -367,7 +459,7 @@ def main():
                             max_value=500,
                             value=200,
                             step=50,
-                            help="More simulations = more accurate probability estimate"
+                            help="More simulations = larger sample of hypothetical scenarios"
                         )
                         
                     elif "Rolling Window" in sim_mode:
@@ -469,22 +561,26 @@ def main():
                 actual_result = st.session_state.get('actual_result')
                 if actual_result and actual_result.passed:
                     st.success(f"""
-                    # ✅ PASSED!
+                    # ✅ MET RULE CRITERIA
                     
-                    Your actual track record **would have passed** this evaluation!
+                    Based on this hypothetical simulation, your uploaded backtest data **met the rule criteria** for this evaluation.
                     
-                    - **Days to Target:** {actual_result.days_to_target}
-                    - **Max Drawdown Hit:** ${actual_result.max_drawdown:,.2f}
+                    - **Simulated Days to Target:** {actual_result.days_to_target}
+                    - **Max Drawdown in Simulation:** ${actual_result.max_drawdown:,.2f}
                     - **Drawdown Limit:** ${rules['max_trailing_drawdown']:,}
-                    - **Buffer Remaining:** ${rules['max_trailing_drawdown'] - actual_result.max_drawdown:,.2f}
+                    - **Buffer in Simulation:** ${rules['max_trailing_drawdown'] - actual_result.max_drawdown:,.2f}
+                    
+                    *Note: This is a hypothetical result based on historical data. Actual trading results may differ materially.*
                     """)
                 else:
                     st.error(f"""
-                    # ❌ FAILED
+                    # ❌ DID NOT MEET CRITERIA
                     
-                    Your actual track record **would NOT have passed** this evaluation.
+                    Based on this hypothetical simulation, your uploaded backtest data **did not meet** the rule criteria.
                     
-                    **Reason:** {actual_result.failure_reason if actual_result else 'Unknown'}
+                    **Simulated Failure Reason:** {actual_result.failure_reason if actual_result else 'Unknown'}
+                    
+                    *Note: This is a hypothetical result for educational purposes only.*
                     """)
                     if actual_result:
                         st.metric("Max Drawdown Hit", f"${actual_result.max_drawdown:,.2f}")
@@ -504,17 +600,20 @@ def main():
                 st.markdown("### Key Metrics")
                 st.metric(
                     "Tests Passed" if sim_mode == "rolling_window" else "Simulations Passed",
-                    f"{results.pass_count} / {results.total_simulations}"
+                    f"{results.pass_count} / {results.total_simulations}",
+                    help=TOOLTIPS.get('pass_rate', 'Percentage of simulations that passed the evaluation')
                 )
                 
                 if results.pass_count > 0:
                     st.metric(
                         "Avg Days to Target",
-                        f"{results.avg_days_to_target:.1f} days"
+                        f"{results.avg_days_to_target:.1f} days",
+                        help=TOOLTIPS.get('days_to_target', 'Average number of trading days to reach profit target')
                     )
                     st.metric(
                         "Median Days to Target",
-                        f"{results.median_days_to_target:.0f} days"
+                        f"{results.median_days_to_target:.0f} days",
+                        help="The middle value - 50% of simulations finished faster, 50% slower"
                     )
                 
                 st.metric(
@@ -583,12 +682,11 @@ def main():
                         st.error(f"""
                         **🔴 {reason}** — {count} simulations ({pct:.1f}%)
                         
-                        Your account equity dropped below the maximum allowed drawdown limit.
-                        - **Your limit:** ${rules['max_trailing_drawdown']:,} ({dd_type} trailing)
-                        - **Avg max DD hit:** ${results.avg_max_drawdown:,.0f}
-                        - **What this means:** Your winning streaks create a high water mark, then losing streaks pull you below the trailing threshold.
+                        In these hypothetical simulations, account equity dropped below the maximum allowed drawdown limit.
+                        - **Rule limit:** ${rules['max_trailing_drawdown']:,} ({dd_type} trailing)
+                        - **Avg max DD in simulations:** ${results.avg_max_drawdown:,.0f}
                         
-                        **💡 Fix:** Try firms with larger drawdown allowances (Lucid has 4% = ${int(rules['account_size']*0.04):,}) or reduce position sizes.
+                        *For reference: Different firms have different drawdown allowances and calculation methods (EOD vs Intraday).*
                         """)
                         
                     elif "Consistency Rule Violated" in reason:
@@ -596,11 +694,10 @@ def main():
                         st.warning(f"""
                         **🟡 {reason}** — {count} simulations ({pct:.1f}%)
                         
-                        One of your trading days made too much profit relative to your total.
+                        In these hypothetical simulations, a single trading day exceeded the allowed percentage of total profits.
                         - **Rule:** No single day can exceed {max_pct}% of total profits
-                        - **What this means:** You had "home run" days that were too large compared to your other days.
                         
-                        **💡 Fix:** Try firms with NO consistency rule (Apex eval, Bulenox, Tradeify Growth) or trade more consistently sized positions.
+                        *For reference: Some firms have no consistency rule during evaluation, while others enforce various percentages.*
                         """)
                         
                     elif "Daily Loss Limit" in reason:
@@ -608,99 +705,117 @@ def main():
                         st.warning(f"""
                         **🟡 {reason}** — {count} simulations ({pct:.1f}%)
                         
-                        You lost more than the maximum allowed amount in a single day.
-                        - **Daily limit:** ${dll:,}
-                        - **What this means:** A bad day exceeded the firm's daily risk tolerance.
+                        In these hypothetical simulations, a single day loss exceeded the firm's daily limit.
+                        - **Daily limit for this rule set:** ${dll:,}
                         
-                        **💡 Fix:** Try firms with NO daily loss limit (Apex, Lucid Flex, Take Profit Trader, MFF) or add stricter daily stop losses.
+                        *For reference: Some firms have no daily loss limit, while others enforce strict daily caps.*
                         """)
                         
                     elif "Profit Target Not Reached" in reason:
                         st.info(f"""
                         **🔵 {reason}** — {count} simulations ({pct:.1f}%)
                         
-                        The simulation ended before reaching the required profit target.
-                        - **Target needed:** ${rules['profit_target']:,}
-                        - **What this means:** The random sequence of your trades didn't accumulate enough profit before the data ran out.
+                        In these hypothetical simulations, the data ended before reaching the required profit target.
+                        - **Target for this rule set:** ${rules['profit_target']:,}
                         
-                        **💡 Fix:** This often resolves with more trading days. Your strategy may need more time to reach targets, or consider smaller account sizes with lower targets.
+                        *This may indicate the historical data period was too short, or the rule set requires a higher profit target than the data supported.*
                         """)
                     else:
                         st.info(f"**{reason}** — {count} simulations ({pct:.1f}%)")
                 
                 # Summary recommendation box
                 st.markdown("---")
-                st.markdown("### 🎯 TOP RECOMMENDATION")
+                st.markdown("### 📚 Educational Notes on Rule Differences")
                 primary_failure = sorted_reasons[0][0] if sorted_reasons else None
                 
                 if primary_failure and "Drawdown" in primary_failure:
-                    # Find best alternative firm
+                    # Find firms with different drawdown rules
                     current_dd = rules['max_trailing_drawdown']
-                    better_firms = [f for f in prop_firms.values() 
+                    different_firms = [f for f in prop_firms.values() 
                                    if f['account_size'] == rules['account_size'] 
                                    and f['max_trailing_drawdown'] > current_dd]
                     
-                    if better_firms:
-                        best = max(better_firms, key=lambda x: x['max_trailing_drawdown'])
-                        st.success(f"""
-                        **Drawdown is your #1 issue.** 
+                    if different_firms:
+                        best = max(different_firms, key=lambda x: x['max_trailing_drawdown'])
+                        st.info(f"""
+                        **Drawdown was the primary factor in simulated failures.** 
                         
-                        Try **{best['display_name']}** which has a ${best['max_trailing_drawdown']:,} drawdown 
-                        (${best['max_trailing_drawdown'] - current_dd:,} more room than your current selection).
+                        For reference, different firms have varying drawdown allowances. For example, 
+                        **{best['display_name']}** has a ${best['max_trailing_drawdown']:,} drawdown limit 
+                        (${best['max_trailing_drawdown'] - current_dd:,} more than the currently selected rules).
+                        
+                        *This is general information about rule differences, not a recommendation.*
                         """)
                     else:
-                        st.success("""
-                        **Drawdown is your #1 issue.**
+                        st.info("""
+                        **Drawdown was the primary factor in simulated failures.**
                         
-                        Consider reducing position sizes by 20-30% or choosing a smaller account size with proportionally larger drawdown allowance.
+                        Different prop firms have varying drawdown allowances. Reviewing rule structures 
+                        across firms may be educational for understanding how different rules work.
+                        
+                        *This is general information for educational purposes.*
                         """)
                         
                 elif primary_failure and "Consistency" in primary_failure:
-                    st.success("""
-                    **Consistency rule is your #1 issue.**
+                    st.info("""
+                    **Consistency rule was the primary factor in simulated failures.**
                     
-                    Try **Apex Trader Funding** or **Bulenox** — they have NO consistency rule during evaluation.
+                    For reference, some firms have no consistency rule during evaluation (such as Apex and Bulenox), 
+                    while others require profits to be spread across multiple days.
+                    
+                    *This is general information about rule differences, not a recommendation.*
                     """)
                     
                 elif primary_failure and "Daily Loss" in primary_failure:
-                    st.success("""
-                    **Daily loss limit is your #1 issue.**
+                    st.info("""
+                    **Daily loss limit was the primary factor in simulated failures.**
                     
-                    Try **My Funded Futures** or **Lucid Flex** — they have NO daily loss limit.
+                    For reference, some firms have no daily loss limit (such as MFF and Lucid Flex), 
+                    while others enforce strict daily limits.
+                    
+                    *This is general information about rule differences, not a recommendation.*
                     """)
             
             else:
                 st.success("🎉 **All simulations passed!** No failures to analyze.")
             
             # Interpretation
-            st.markdown("### 🎯 Overall Assessment")
+            st.markdown("### 🎯 Simulation Summary")
             if results.pass_rate >= 0.7:
                 st.success(f"""
-                **Strong pass probability!** 
+                **High pass rate in simulations** 
                 
-                Based on {results.total_simulations} simulations, 
-                you have a **{results.pass_rate*100:.1f}%** chance of passing.
+                In {results.total_simulations} hypothetical simulations using your historical data, 
+                **{results.pass_rate*100:.1f}%** met the rule criteria.
+                
+                *Remember: Past performance in simulations does not predict future results.*
                 """)
             elif results.pass_rate >= 0.5:
                 st.warning(f"""
-                **Moderate pass probability.**
+                **Moderate pass rate in simulations**
                 
-                With a **{results.pass_rate*100:.1f}%** pass rate, review the 
-                failure reasons above and consider adjustments.
+                With a **{results.pass_rate*100:.1f}%** pass rate in simulations, review the 
+                analysis above to understand the rule criteria.
+                
+                *This is hypothetical analysis for educational purposes.*
                 """)
             elif results.pass_rate >= 0.25:
                 st.error(f"""
-                **Low pass probability.**
+                **Lower pass rate in simulations**
                 
-                A **{results.pass_rate*100:.1f}%** pass rate suggests trying 
-                a different prop firm or adjusting your strategy.
+                A **{results.pass_rate*100:.1f}%** pass rate in these hypothetical simulations 
+                suggests reviewing how your historical data compares to different rule sets.
+                
+                *Results are for educational purposes only.*
                 """)
             else:
                 st.error(f"""
-                **Very low pass probability.**
+                **Low pass rate in simulations**
                 
-                At **{results.pass_rate*100:.1f}%**, this strategy is not 
-                well-suited for these rules. See recommendations above.
+                At **{results.pass_rate*100:.1f}%**, your historical data showed limited compatibility 
+                with these specific rules in simulations. See the educational analysis above.
+                
+                *This is not a prediction of future performance.*
                 """)
 
     # Full width charts below
@@ -742,8 +857,8 @@ def main():
         
         # Payout Projection Section
         st.divider()
-        st.subheader("💰 Payout Projection")
-        st.caption("See how much you could potentially withdraw after passing the evaluation")
+        st.subheader("💰 Hypothetical Payout Simulation")
+        st.caption("Educational simulation showing how payouts work under different firm rules — based on your historical data")
         
         # Check if firm has payout rules
         if 'payout_rules' in rules and st.session_state.trades:
@@ -780,20 +895,20 @@ def main():
                     st.info(payout_rules['notes'])
             
             # Withdrawal strategy slider
-            st.markdown("#### 🎚️ Withdrawal Strategy")
+            st.markdown("#### 🎚️ Withdrawal Strategy Simulation")
             withdrawal_pct = st.slider(
-                "What % of available profits to withdraw each payout?",
+                "Simulated withdrawal % of available profits:",
                 min_value=10,
                 max_value=100,
                 value=100,
                 step=10,
-                help="Lower percentage = more cushion left in account = potentially longer account life. 100% = withdraw maximum allowed each time."
+                help="Adjust to see how different withdrawal strategies affect the hypothetical simulation. This is for educational comparison only."
             )
             
             if withdrawal_pct < 100:
-                st.info(f"💡 **Conservative Strategy:** You'll withdraw only {withdrawal_pct}% of available profits, leaving {100-withdrawal_pct}% as extra cushion to extend account longevity.")
+                st.info(f"💡 **Simulating Conservative Approach:** Withdrawing only {withdrawal_pct}% of available profits in this hypothetical scenario.")
             else:
-                st.caption("📈 **Aggressive Strategy:** Withdrawing maximum allowed each payout.")
+                st.caption("📈 **Simulating Maximum Withdrawal:** Taking maximum allowed each payout in this scenario.")
             
             # Run payout simulation button
             if st.button("📊 Run Payout Projection", type="secondary"):
@@ -816,11 +931,13 @@ def main():
                 
                 if not pr.passed_eval:
                     st.error(f"""
-                    ### ❌ Did Not Pass Evaluation
+                    ### ❌ Did Not Meet Evaluation Criteria in Simulation
                     
-                    Your actual track record would not have passed this evaluation.
+                    In this hypothetical simulation, the uploaded backtest data did not meet the evaluation criteria for this rule set.
                     
-                    **Reason:** {pr.blow_reason}
+                    **Simulated Failure Reason:** {pr.blow_reason}
+                    
+                    *This is a hypothetical result based on historical data for educational purposes only.*
                     """)
                 else:
                     # Success metrics
@@ -828,25 +945,33 @@ def main():
                     
                     payout_cols = st.columns(4)
                     with payout_cols[0]:
-                        st.metric("Days to First Payout", f"{pr.days_to_first_payout}" if pr.days_to_first_payout > 0 else "N/A")
+                        st.metric("Days to First Payout", f"{pr.days_to_first_payout}" if pr.days_to_first_payout > 0 else "N/A",
+                                  help="Trading days from start until first withdrawal was eligible")
                     with payout_cols[1]:
-                        st.metric("Total Payouts", pr.total_payouts)
+                        st.metric("Total Payouts", pr.total_payouts,
+                                  help="Number of successful withdrawals taken")
                     with payout_cols[2]:
-                        st.metric("Total Withdrawn", f"${pr.total_withdrawn:,.0f}")
+                        st.metric("Total Withdrawn", f"${pr.total_withdrawn:,.0f}",
+                                  help=TOOLTIPS.get('total_withdrawn', 'Gross amount withdrawn before profit split'))
                     with payout_cols[3]:
-                        st.metric("You Keep (after split)", f"${pr.total_kept_after_split:,.0f}")
+                        st.metric("You Keep (after split)", f"${pr.total_kept_after_split:,.0f}",
+                                  help=TOOLTIPS.get('you_keep', 'Net amount after profit split with prop firm'))
                     
                     # Additional info
                     info_cols = st.columns(3)
                     with info_cols[0]:
-                        st.metric("Avg Payout Amount", f"${pr.avg_payout_amount:,.0f}" if pr.avg_payout_amount > 0 else "N/A")
+                        st.metric("Avg Payout Amount", f"${pr.avg_payout_amount:,.0f}" if pr.avg_payout_amount > 0 else "N/A",
+                                  help=TOOLTIPS.get('avg_payout', 'Average withdrawal amount per payout'))
                     with info_cols[1]:
-                        st.metric("Peak Balance", f"${pr.peak_balance:,.0f}")
+                        st.metric("Peak Balance", f"${pr.peak_balance:,.0f}",
+                                  help=TOOLTIPS.get('peak_balance', 'Highest account balance reached'))
                     with info_cols[2]:
                         if pr.account_blown:
-                            st.metric("Account Lifespan", f"{pr.blown_on_day} days", delta="Blown", delta_color="inverse")
+                            st.metric("Account Lifespan", f"{pr.blown_on_day} days", delta="Blown", delta_color="inverse",
+                                      help=TOOLTIPS.get('account_lifespan', 'How many days account lasted before blow'))
                         else:
-                            st.metric("Account Status", "Active ✅")
+                            st.metric("Account Status", "Active ✅",
+                                      help="Account survived entire backtest period")
                     
                     # Account Blown Explanation
                     if pr.account_blown:
@@ -861,25 +986,25 @@ def main():
                         # Provide context
                         if pr.total_payouts > 0:
                             st.markdown(f"""
-                            #### 📊 The Full Picture
+                            #### 📊 Hypothetical Simulation Summary
                             
-                            | Metric | Value |
+                            | Metric | Simulated Value |
                             |--------|-------|
-                            | Days Trading | {pr.blown_on_day} |
-                            | Payouts Taken | {pr.total_payouts} |
-                            | Total Withdrawn | ${pr.total_withdrawn:,.0f} |
-                            | **You Kept** | **${pr.total_kept_after_split:,.0f}** |
-                            | Final Balance (lost) | ${pr.final_account_balance:,.0f} |
+                            | Days in Simulation | {pr.blown_on_day} |
+                            | Simulated Payouts | {pr.total_payouts} |
+                            | Simulated Withdrawals | ${pr.total_withdrawn:,.0f} |
+                            | **Simulated Net (after split)** | **${pr.total_kept_after_split:,.0f}** |
+                            | Final Balance | ${pr.final_account_balance:,.0f} |
                             
-                            **Net Result:** Even though the account was blown, you extracted **${pr.total_kept_after_split:,.0f}** in profits first!
+                            *This is a hypothetical simulation based on historical data. Actual results may differ materially due to slippage, commissions, market conditions, and other factors not accounted for in this simulation.*
                             """)
                             
                             # Suggestion for conservative strategy
                             if used_pct == 100:
                                 st.info(f"""
-                                💡 **Try a Conservative Strategy:** Slide the withdrawal percentage down to 50-70% 
-                                to leave more cushion in the account. This might extend the account's lifespan 
-                                and potentially allow for more total payouts.
+                                💡 **Educational Note:** In this simulation, maximum withdrawals were taken. 
+                                You can adjust the withdrawal percentage slider above to see how different 
+                                withdrawal strategies affect the hypothetical simulation results.
                                 """)
                     else:
                         st.success(f"""
@@ -895,29 +1020,43 @@ def main():
                         st.markdown("#### 📜 Payout History")
                         history_data = []
                         for i, p in enumerate(pr.payout_history):
+                            # Use cushion_to_trailing (real danger zone), fallback to old field
+                            real_cushion = p.get('cushion_to_trailing', p.get('cushion_after', 0))
                             history_data.append({
                                 'Payout #': i + 1,
                                 'Day': p['day'],
                                 'Withdrawn': f"${p['amount']:,.0f}",
                                 'You Keep': f"${p['kept']:,.0f}",
                                 'Balance After': f"${p['balance_after']:,.0f}",
-                                'Cushion Left': f"${p.get('cushion_after', 0):,.0f}",
-                                'Left in Account': f"${p.get('available_not_taken', 0):,.0f}" if p.get('available_not_taken', 0) > 0 else "-"
+                                'Blow Threshold': f"${p.get('trailing_threshold', 0):,.0f}" if p.get('trailing_threshold') else "-",
+                                'Cushion': f"${real_cushion:,.0f}"
                             })
                         st.dataframe(pd.DataFrame(history_data), use_container_width=True, hide_index=True)
                         
-                        # Explain cushion column
-                        st.caption("**Cushion Left** = Buffer above minimum balance after payout. Higher cushion = more room before account is blown.")
+                        # Detailed column explanations
+                        with st.expander("ℹ️ Column Explanations"):
+                            st.markdown(f"""
+                            | Column | Meaning |
+                            |--------|---------|
+                            | **Payout #** | {PAYOUT_COLUMNS.get('payout_num', 'Sequential payout number')} |
+                            | **Day** | {PAYOUT_COLUMNS.get('day', 'Trading day of withdrawal')} |
+                            | **Withdrawn** | {PAYOUT_COLUMNS.get('withdrawn', 'Gross amount withdrawn')} |
+                            | **You Keep** | {PAYOUT_COLUMNS.get('you_keep', 'After profit split')} |
+                            | **Balance After** | {PAYOUT_COLUMNS.get('balance_after', 'Account balance after withdrawal')} |
+                            | **Blow Threshold** | {PAYOUT_COLUMNS.get('blow_threshold', 'Account blows if balance drops here')} |
+                            | **Cushion** | {PAYOUT_COLUMNS.get('cushion', 'Safety margin above blow threshold')} |
+                            """)
+                        
+                        st.caption("⚠️ **Key:** When **Cushion** approaches $0, your account is about to blow!")
                     
                     # MLL Warning for Topstep
                     if payout_rules.get('mll_resets_on_payout') and pr.total_payouts > 0:
                         st.warning(f"""
-                        ⚠️ **Topstep MLL Warning:** After your first payout, the Maximum Loss Limit 
-                        reset to $0. This means your account cannot go below ${rules['account_size']:,} 
-                        or it will be blown. This significantly increases risk after the first withdrawal.
+                        ⚠️ **Topstep MLL Rule Note:** In this simulation, the Maximum Loss Limit 
+                        reset to $0 after the first payout. Under these rules, the account cannot go below 
+                        ${rules['account_size']:,} without being closed.
                         
-                        **Strategy tip:** Some traders prefer to build up a large cushion before taking 
-                        their first payout, knowing that risk increases dramatically afterward.
+                        *This is general information about how Topstep's MLL reset rule works, for educational purposes.*
                         """)
         else:
             st.info("Payout rules not available for this firm. Contact support to add them.")
@@ -1023,23 +1162,29 @@ def main():
                         hide_index=True
                     )
                     
-                    # Highlight best option
+                    # Highlight highest rate
                     best = comparison_results[0]
-                    st.success(f"🏆 **Best match:** {best['Firm']} with {best['Pass Rate']} pass rate")
+                    st.info(f"📊 **Highest simulation pass rate:** {best['Firm']} at {best['Pass Rate']} in these hypothetical tests")
         
         # Disclaimer
         st.divider()
-        st.caption("""
-        **⚠️ Important Disclaimer:** This simulation uses Monte Carlo methods to randomly resample your historical backtest trades. 
-        Results are probabilistic estimates, not guarantees. Actual trading involves additional factors including:
-        - Market conditions and regime changes
-        - Execution quality and slippage
-        - Psychological factors
-        - Platform-specific rules and timing
+        st.error("""
+        **⚠️ IMPORTANT DISCLAIMER — PLEASE READ**
         
-        This tool is for educational and planning purposes only. Past performance does not guarantee future results.
-        Always trade responsibly and only risk capital you can afford to lose.
+        **HYPOTHETICAL PERFORMANCE RESULTS HAVE INHERENT LIMITATIONS.** Unlike actual trading records, simulated results do not represent actual trading. Since trades have not actually been executed, results may have under- or over-compensated for the impact of certain market factors, such as lack of liquidity, slippage, commissions, and market volatility.
+        
+        **NO REPRESENTATION IS BEING MADE** that any account will or is likely to achieve profits or losses similar to those shown. In fact, there are frequently sharp differences between hypothetical performance results and actual results subsequently achieved.
+        
+        **THIS TOOL IS FOR EDUCATIONAL AND INFORMATIONAL PURPOSES ONLY.** It is designed to help users understand how different prop firm rules work by comparing historical backtest data against various rule sets. This is NOT investment advice, trading advice, or a recommendation to use any particular prop firm.
+        
+        **WE ARE NOT REGISTERED INVESTMENT ADVISORS.** We do not provide personalized or individualized trading advice. All information presented is general in nature and should not be construed as advice tailored to your specific situation.
+        
+        **PAST PERFORMANCE DOES NOT PREDICT FUTURE RESULTS.** Trading futures involves substantial risk of loss and is not suitable for all investors. You should carefully consider whether trading is suitable for you in light of your circumstances, knowledge, and financial resources.
+        
+        **USERS ARE SOLELY RESPONSIBLE** for their own trading decisions. Always conduct your own research and consult with qualified professionals before making any trading or investment decisions.
         """)
+        
+        st.caption("*By using this tool, you acknowledge that you have read and understood this disclaimer.*")
 
 
 if __name__ == "__main__":
