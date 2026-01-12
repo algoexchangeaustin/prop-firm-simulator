@@ -772,18 +772,30 @@ class PayoutSimulationResult:
     avg_payout_amount: float
     account_blown: bool
     blown_on_day: int
+    blow_reason: str  # Detailed explanation of why account was blown
     final_account_balance: float
-    payout_history: List[Dict]  # List of {day, amount, balance_after}
+    peak_balance: float
+    cushion_at_blow: float  # How much buffer was left when blown
+    payout_history: List[Dict]  # List of {day, amount, balance_after, cushion_after}
+    equity_curve: List[float]  # For visualization
 
 
 def simulate_funded_account_with_payouts(
     trades: List[Dict],
     rules: Dict,
+    withdrawal_percent: float = 100.0,  # NEW: What % of available to withdraw
     max_days: int = None
 ) -> PayoutSimulationResult:
     """
     Simulate passing eval THEN trading the funded account with payouts.
     Uses actual trade sequence (no shuffling).
+    
+    Args:
+        trades: List of trade dictionaries
+        rules: Prop firm rules dictionary
+        withdrawal_percent: What percentage of available profits to withdraw (1-100)
+                           Lower = more cushion left in account = longer account life
+        max_days: Optional limit on simulation days
     
     This answers: "If I passed the eval, how many payouts could I take 
     and how much money would I actually withdraw?"
@@ -815,11 +827,15 @@ def simulate_funded_account_with_payouts(
     profit_split_first = payout_rules.get('profit_split_first', 10000)
     profit_split_after = payout_rules.get('profit_split_after', 90)
     
+    # Clamp withdrawal percent
+    withdrawal_percent = max(1.0, min(100.0, withdrawal_percent))
+    
     # Phase 1: Evaluation
     equity = starting_balance
     high_water_mark = starting_balance
     eval_passed = False
     days_to_pass = 0
+    equity_curve = [equity]
     
     for day_idx, daily_pnl in enumerate(daily_pnls):
         # Check DLL
@@ -828,10 +844,13 @@ def simulate_funded_account_with_payouts(
                 passed_eval=False, days_to_pass_eval=0, days_to_first_payout=0,
                 total_payouts=0, total_withdrawn=0, total_kept_after_split=0,
                 avg_payout_amount=0, account_blown=True, blown_on_day=day_idx+1,
-                final_account_balance=equity + daily_pnl, payout_history=[]
+                blow_reason=f"Daily Loss Limit breached during evaluation (lost ${abs(daily_pnl):,.0f}, limit ${daily_loss_limit:,})",
+                final_account_balance=equity + daily_pnl, peak_balance=high_water_mark,
+                cushion_at_blow=0, payout_history=[], equity_curve=equity_curve
             )
         
         equity += daily_pnl
+        equity_curve.append(equity)
         
         if trailing_type == 'end_of_day':
             high_water_mark = max(high_water_mark, equity)
@@ -844,7 +863,9 @@ def simulate_funded_account_with_payouts(
                 passed_eval=False, days_to_pass_eval=0, days_to_first_payout=0,
                 total_payouts=0, total_withdrawn=0, total_kept_after_split=0,
                 avg_payout_amount=0, account_blown=True, blown_on_day=day_idx+1,
-                final_account_balance=equity, payout_history=[]
+                blow_reason=f"Max drawdown exceeded during evaluation (${current_dd:,.0f} > ${max_trailing_dd:,} limit)",
+                final_account_balance=equity, peak_balance=high_water_mark,
+                cushion_at_blow=max_trailing_dd - current_dd, payout_history=[], equity_curve=equity_curve
             )
         
         profit = equity - starting_balance
@@ -858,21 +879,24 @@ def simulate_funded_account_with_payouts(
             passed_eval=False, days_to_pass_eval=0, days_to_first_payout=0,
             total_payouts=0, total_withdrawn=0, total_kept_after_split=0,
             avg_payout_amount=0, account_blown=False, blown_on_day=0,
-            final_account_balance=equity, payout_history=[]
+            blow_reason="Did not reach profit target within available trading days",
+            final_account_balance=equity, peak_balance=high_water_mark,
+            cushion_at_blow=0, payout_history=[], equity_curve=equity_curve
         )
     
     # Phase 2: Funded Account with Payouts
-    # Reset for funded phase - start from where eval ended
     funded_start_day = days_to_pass
     remaining_pnls = daily_pnls[funded_start_day:]
     
     # Funded account starts fresh
     funded_balance = starting_balance + (equity - starting_balance)  # Keep eval profits
     high_water_mark = funded_balance
+    peak_balance = funded_balance
     min_balance = starting_balance + min_balance_buffer  # Can't go below this
     
     # For MLL tracking (especially Topstep where MLL resets to $0 after payout)
     current_mll = max_trailing_dd  # Start with full drawdown allowance
+    mll_floor = starting_balance  # After Topstep payout, can't go below this
     
     profitable_days_count = 0
     days_since_last_payout = 0
@@ -883,6 +907,8 @@ def simulate_funded_account_with_payouts(
     days_to_first_payout = 0
     account_blown = False
     blown_on_day = 0
+    blow_reason = ""
+    cushion_at_blow = 0
     
     # Track profits for consistency rule
     profits_since_last_payout = []
@@ -895,14 +921,20 @@ def simulate_funded_account_with_payouts(
         if daily_loss_limit and daily_pnl < -daily_loss_limit:
             account_blown = True
             blown_on_day = actual_day
+            blow_reason = f"Daily Loss Limit breached on funded account (lost ${abs(daily_pnl):,.0f} in one day, limit is ${daily_loss_limit:,})"
+            cushion_at_blow = funded_balance - min_balance
             break
         
         funded_balance += daily_pnl
+        equity_curve.append(funded_balance)
         profits_since_last_payout.append(daily_pnl)
         
         # Track profitable days
         if daily_pnl >= min_profit_per_day:
             profitable_days_count += 1
+        
+        # Update peak
+        peak_balance = max(peak_balance, funded_balance)
         
         # Update HWM
         high_water_mark = max(high_water_mark, funded_balance)
@@ -910,21 +942,29 @@ def simulate_funded_account_with_payouts(
         # Check drawdown - use current MLL (may have been reset after payout)
         if mll_resets_on_payout and total_payouts > 0:
             # Topstep: After first payout, MLL is $0 (can't go below starting balance)
-            if funded_balance <= starting_balance:
+            if funded_balance <= mll_floor:
                 account_blown = True
                 blown_on_day = actual_day
+                cushion_at_blow = 0
+                blow_reason = f"Account balance dropped to ${funded_balance:,.0f}, which is at or below the ${mll_floor:,} floor. After your first payout, the Maximum Loss Limit reset to $0, meaning you cannot lose below the starting balance. This is a Topstep-specific rule that significantly increases risk after withdrawals."
                 break
         else:
             current_dd = high_water_mark - funded_balance
             if current_dd > current_mll:
                 account_blown = True
                 blown_on_day = actual_day
+                cushion_at_blow = current_mll - current_dd
+                blow_reason = f"Trailing drawdown exceeded (dropped ${current_dd:,.0f} from peak of ${high_water_mark:,.0f}, limit is ${current_mll:,}). Your high water mark was ${high_water_mark:,.0f} and balance fell to ${funded_balance:,.0f}."
+                if total_payouts > 0:
+                    blow_reason += f" Note: You had already withdrawn ${total_withdrawn:,.0f} in {total_payouts} payouts, which reduced your cushion."
                 break
         
         # Check if below minimum balance
         if funded_balance < min_balance:
             account_blown = True
             blown_on_day = actual_day
+            cushion_at_blow = funded_balance - min_balance
+            blow_reason = f"Account balance (${funded_balance:,.0f}) dropped below minimum required balance (${min_balance:,}). You need to maintain at least ${min_balance_buffer:,} buffer above starting balance."
             break
         
         # Check payout eligibility
@@ -947,18 +987,24 @@ def simulate_funded_account_with_payouts(
             # Calculate available for withdrawal
             available = funded_balance - min_balance
             
-            # Apply payout cap
+            # Apply payout cap (None means unlimited)
             if total_payouts == 0:
-                payout_cap = first_payout_cap
+                payout_cap = first_payout_cap if first_payout_cap else float('inf')
             else:
-                payout_cap = subsequent_payout_cap
+                payout_cap = subsequent_payout_cap if subsequent_payout_cap else float('inf')
             
             # Apply percentage cap if exists (Topstep 50% rule)
             if max_payout_percent:
                 pct_cap = available * (max_payout_percent / 100)
                 payout_cap = min(payout_cap, pct_cap)
             
-            payout_amount = min(available, payout_cap)
+            max_payout = min(available, payout_cap)
+            
+            # Apply user's withdrawal percentage preference
+            payout_amount = max_payout * (withdrawal_percent / 100)
+            
+            # Calculate cushion after this payout
+            cushion_after = funded_balance - payout_amount - min_balance
             
             if payout_amount >= 100:  # Minimum payout threshold
                 # Calculate profit split
@@ -979,7 +1025,9 @@ def simulate_funded_account_with_payouts(
                     'day': actual_day,
                     'amount': payout_amount,
                     'kept': kept,
-                    'balance_after': funded_balance
+                    'balance_after': funded_balance,
+                    'cushion_after': cushion_after,
+                    'available_not_taken': max_payout - payout_amount  # How much they left in
                 })
                 
                 if days_to_first_payout == 0:
@@ -994,12 +1042,17 @@ def simulate_funded_account_with_payouts(
                 if mll_resets_on_payout:
                     # MLL goes to $0 - can't lose below starting balance
                     high_water_mark = funded_balance
+                    mll_floor = starting_balance
                 
                 # Handle buffer reset (MFF)
                 if buffer_resets_on_payout:
                     high_water_mark = funded_balance
     
     avg_payout = total_withdrawn / total_payouts if total_payouts > 0 else 0
+    
+    # If account survived all available days
+    if not account_blown and not blow_reason:
+        blow_reason = "Account still active - survived all available trading days in backtest"
     
     return PayoutSimulationResult(
         passed_eval=True,
@@ -1011,8 +1064,12 @@ def simulate_funded_account_with_payouts(
         avg_payout_amount=avg_payout,
         account_blown=account_blown,
         blown_on_day=blown_on_day,
+        blow_reason=blow_reason,
         final_account_balance=funded_balance,
-        payout_history=payout_history
+        peak_balance=peak_balance,
+        cushion_at_blow=cushion_at_blow,
+        payout_history=payout_history,
+        equity_curve=equity_curve
     )
 
 
