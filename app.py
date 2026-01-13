@@ -10,7 +10,6 @@ import json
 import plotly.graph_objects as go
 import plotly.express as px
 from pathlib import Path
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 # Import simulation engine
 from simulation import (
@@ -412,9 +411,7 @@ def main():
                     
                     # Show preview
                     with st.expander("Preview uploaded data"):
-                        gb = GridOptionsBuilder.from_dataframe(df.head(10))
-                        gb.configure_default_column(resizable=True, filterable=True, sortable=True)
-                        AgGrid(df.head(10), gridOptions=gb.build(), height=300, theme='streamlit')
+                        st.dataframe(df.head(10), use_container_width=True, hide_index=True)
                 else:
                     detected_platform = "Generic"
                     df = pd.read_csv(uploaded_file, on_bad_lines='skip')
@@ -422,9 +419,7 @@ def main():
                     
                     # Show preview
                     with st.expander("Preview uploaded data"):
-                        gb = GridOptionsBuilder.from_dataframe(df.head(10))
-                        gb.configure_default_column(resizable=True, filterable=True, sortable=True)
-                        AgGrid(df.head(10), gridOptions=gb.build(), height=300, theme='streamlit')
+                        st.dataframe(df.head(10), use_container_width=True, hide_index=True)
                 
                 # Parse trades with format info
                 trades = parse_trades_from_csv(df, raw_text, platform_hint=detected_platform)
@@ -817,12 +812,11 @@ def main():
                     })
                 
                 # Display as table
-                failure_df = pd.DataFrame(failure_data)
-                gb = GridOptionsBuilder.from_dataframe(failure_df)
-                gb.configure_default_column(resizable=True, sortable=True)
-                gb.configure_column("Failure Type", flex=2)
-                gb.configure_column("Count", flex=1)
-                AgGrid(failure_df, gridOptions=gb.build(), height=min(200, 50 + len(failure_data) * 35), theme='streamlit', fit_columns_on_grid_load=True)
+                st.dataframe(
+                    pd.DataFrame(failure_data),
+                    use_container_width=True,
+                    hide_index=True
+                )
                 
                 # Detailed explanation for each failure type
                 st.markdown("### 📖 What Each Failure Means:")
@@ -1185,10 +1179,7 @@ def main():
                                 'Blow Threshold': f"${p.get('trailing_threshold', 0):,.0f}" if p.get('trailing_threshold') else "-",
                                 'Cushion': f"${real_cushion:,.0f}"
                             })
-                        history_df = pd.DataFrame(history_data)
-                        gb = GridOptionsBuilder.from_dataframe(history_df)
-                        gb.configure_default_column(resizable=True, sortable=True)
-                        AgGrid(history_df, gridOptions=gb.build(), height=min(300, 50 + len(history_data) * 35), theme='streamlit', fit_columns_on_grid_load=True)
+                        st.dataframe(pd.DataFrame(history_data), use_container_width=True, hide_index=True)
                         
                         # Detailed column explanations
                         with st.expander("ℹ️ Column Explanations"):
@@ -1313,11 +1304,11 @@ def main():
                     df_compare = pd.DataFrame(comparison_results)
                     
                     st.markdown("**Results ranked by pass rate (highest first):**")
-                    gb = GridOptionsBuilder.from_dataframe(df_compare)
-                    gb.configure_default_column(resizable=True, sortable=True, filterable=True)
-                    gb.configure_column("Firm", flex=2)
-                    gb.configure_column("Pass Rate", flex=1)
-                    AgGrid(df_compare, gridOptions=gb.build(), height=min(400, 50 + len(comparison_results) * 35), theme='streamlit', fit_columns_on_grid_load=True)
+                    st.dataframe(
+                        df_compare,
+                        use_container_width=True,
+                        hide_index=True
+                    )
                     
                     # Highlight highest rate
                     best = comparison_results[0]
