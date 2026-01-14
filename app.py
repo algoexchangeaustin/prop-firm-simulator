@@ -220,74 +220,7 @@ def main():
     # Header with logo
     col_logo, col_title = st.columns([1, 4])
     with col_logo:
-        import base64
-        from pathlib import Path
-        import streamlit.components.v1 as components
-        
-        # Encode both logos as base64 for embedding
-        logo_dark_path = Path(__file__).parent / "logo_dark.png"
-        logo_light_path = Path(__file__).parent / "logo_light.png"
-        
-        if logo_dark_path.exists() and logo_light_path.exists():
-            with open(logo_dark_path, "rb") as f:
-                logo_dark_b64 = base64.b64encode(f.read()).decode()
-            with open(logo_light_path, "rb") as f:
-                logo_light_b64 = base64.b64encode(f.read()).decode()
-            
-            # Use components.html for proper JS access to detect theme
-            logo_html = f"""
-            <div id="logo-wrapper">
-                <img id="logo-dark" src="data:image/png;base64,{logo_dark_b64}" width="200" alt="Algo Exchange" style="display: none;">
-                <img id="logo-light" src="data:image/png;base64,{logo_light_b64}" width="200" alt="Algo Exchange" style="display: none;">
-            </div>
-            <script>
-                function detectThemeAndShowLogo() {{
-                    const darkLogo = document.getElementById('logo-dark');
-                    const lightLogo = document.getElementById('logo-light');
-                    
-                    // Try to get background color from Streamlit's main container
-                    let isDark = true;  // default to dark
-                    
-                    try {{
-                        // Check parent document for Streamlit theme
-                        const stApp = window.parent.document.querySelector('.stApp');
-                        if (stApp) {{
-                            const bgColor = window.parent.getComputedStyle(stApp).backgroundColor;
-                            const rgb = bgColor.match(/\\d+/g);
-                            if (rgb) {{
-                                const brightness = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
-                                isDark = brightness < 128;
-                            }}
-                        }}
-                    }} catch (e) {{
-                        // If can't access parent, check prefers-color-scheme
-                        isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    }}
-                    
-                    if (isDark) {{
-                        darkLogo.style.display = 'block';
-                        lightLogo.style.display = 'none';
-                    }} else {{
-                        darkLogo.style.display = 'none';
-                        lightLogo.style.display = 'block';
-                    }}
-                }}
-                
-                // Run detection
-                detectThemeAndShowLogo();
-                setTimeout(detectThemeAndShowLogo, 100);
-                setTimeout(detectThemeAndShowLogo, 300);
-                setTimeout(detectThemeAndShowLogo, 1000);
-                
-                // Listen for theme changes
-                if (window.matchMedia) {{
-                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', detectThemeAndShowLogo);
-                }}
-            </script>
-            """
-            components.html(logo_html, height=60)
-        else:
-            st.image("logo_dark.png", width=200)
+        st.image("logo_dark.png", width=200)
     with col_title:
         st.title("Prop Firm Rule Comparison Tool")
         st.markdown("*Upload your backtest results to see how they compare against various prop firm rule sets — for educational purposes only*")
@@ -411,7 +344,7 @@ def main():
                     
                     # Show preview
                     with st.expander("Preview uploaded data"):
-                        st.dataframe(df.head(10))
+                        st.dataframe(df.head(10), use_container_width=True, hide_index=True)
                 else:
                     detected_platform = "Generic"
                     df = pd.read_csv(uploaded_file, on_bad_lines='skip')
@@ -419,7 +352,7 @@ def main():
                     
                     # Show preview
                     with st.expander("Preview uploaded data"):
-                        st.dataframe(df.head(10))
+                        st.dataframe(df.head(10), use_container_width=True, hide_index=True)
                 
                 # Parse trades with format info
                 trades = parse_trades_from_csv(df, raw_text, platform_hint=detected_platform)
